@@ -1,6 +1,6 @@
-# pw-gerenciamento-financeiro
+# pw-gerenciamento-financeiro              
 
-📊 Sistema de Controle Financeiro
+📊 Sistema de Controle Financeiro          
 📌 Sobre a Atividade
 
 Este projeto foi desenvolvido como parte da atividade “Aplicação de Controle Financeiro Pessoal e Compartilhado” .
