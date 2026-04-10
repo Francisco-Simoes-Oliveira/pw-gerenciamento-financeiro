@@ -2,7 +2,7 @@ import "./login.css";
 
 const Login = () => {
   return (
-    <div>
+    <div className="content">
       <form action="">
         <div>
           <span>Email</span>
