@@ -1,0 +1,5 @@
+export const Login = "/login"
+export const Register = "/register"
+export const ForgotPassword = "/forgot-password"
+export const VerifyCode = "/verify-code"
+export const Dashboard = "/dashboard"
