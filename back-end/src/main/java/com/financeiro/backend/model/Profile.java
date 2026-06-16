@@ -13,9 +13,9 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Entity
-@Table(name = "perfis")
+@Table(name = "profile")
 @Data
-class Perfil {
+public class Profile {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;

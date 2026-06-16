@@ -10,9 +10,9 @@ import jakarta.persistence.Table;
 import lombok.Data;
 
 @Entity
-@Table(name = "usuarios_perfis")
+@Table(name = "user_profiles")
 @Data
-public class UsuarioPerfil {
+public class UserProfile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
