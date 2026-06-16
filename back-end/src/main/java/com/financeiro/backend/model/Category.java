@@ -3,53 +3,52 @@ package com.financeiro.backend.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.UuidGenerator;
+
+import com.financeiro.backend.enums.CategoryEnum;
+
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import org.hibernate.annotations.UuidGenerator; 
 import lombok.Data;
 
 @Entity
-@Table(name = "user")
+@Table(name = "category")
 @Data
-public class User {
-
+public class Category {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @UuidGenerator
     private UUID id;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @NotBlank(message = "{name.obrigatorio}")
     private String name;
 
-    @Email(message = "{email.invalido}")
-    @NotBlank(message = "{email.obrigatorio}")
-    private String email;
-
-    @NotBlank(message = "{password.obrigatorio}")
-    private String password;
+    private Double budget;
+    
 
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
 
-    @NotNull(message = "{active.obrigatorio}")
-    private Boolean active;
-
-    @ManyToOne
-    @JoinColumn(name = "profile_id")
-    private Profile profile;
+    @Enumerated(EnumType.STRING)
+    private CategoryEnum categoryEnum;
 
     @Override
     public String toString() {
-        return "User [id=" + id + ", name=" + name + ", email=" + email + ", active=" + active + ", profile=" + profile
-                + "]";
+        return "Category [id=" + id + ", name=" + name + "]";
     }
+    
 }

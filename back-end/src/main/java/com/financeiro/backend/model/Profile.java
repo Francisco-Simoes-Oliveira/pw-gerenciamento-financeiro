@@ -2,6 +2,7 @@
 
 package com.financeiro.backend.model;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import jakarta.persistence.Entity;
@@ -19,7 +20,17 @@ public class Profile {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-   
+
+    private String fullName;
+    
+    private LocalDateTime birthDate;
+    
+    private String phone;
+
+    private String avatarUrl;
+
+    
+
     @NotBlank(message = "{descricao.obrigatorio}")
     private String descricao;
 }
