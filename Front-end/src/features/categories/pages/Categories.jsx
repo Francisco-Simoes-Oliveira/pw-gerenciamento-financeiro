@@ -1,15 +1,15 @@
 import PageHeader from "@/components/shared/PageHeader"
 
-export default function ChangePassword() {
+export default function Categories() {
   return (
     <div className="w-full">
       <PageHeader
-        title="Configurações"
-        description="Gerencie suas credenciais de acesso e segurança da conta."
-        breadcrumbs={[{ name: "Configurações" }]}
+        title="Categorias"
+        description="Configure os tipos de gastos e metas para cada grupo."
+        breadcrumbs={[{ name: "Categorias" }]}
       />
       <div className="flex h-[400px] items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-center text-muted-foreground">
-        Área de Configurações / Alterar Senha (Pronto para a Fase 4)
+        Área de Categorias (Pronto para a Fase 7)
       </div>
     </div>
   )
