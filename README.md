@@ -1,339 +1,231 @@
-Atualização completa do README.md
+# PW Gerenciamento Financeiro
 
-O projeto evoluiu significativamente desde a criação do README atual. Diversas features, módulos e padrões arquiteturais foram implementados, tornando a documentação desatualizada.
+O **PW Gerenciamento Financeiro** é um sistema de controle financeiro pessoal e compartilhado voltado para uma gestão eficiente de despesas, receitas e transferências. Ele permite organizar saldos em múltiplas carteiras (contas), controlar acessos entre diferentes membros, estruturar metas e fornecer uma visão unificada da saúde financeira do usuário através de dashboards e relatórios analíticos em tempo real.
 
-Objetivo
+O backend deste projeto foi projetado para oferecer robustez, integridade de dados contábeis e escalabilidade, seguindo padrões modernos de arquitetura corporativa.
 
-Reescrever completamente o arquivo README.md para refletir o estado atual do projeto.
+---
 
-Antes de escrever qualquer conteúdo, analise todo o código-fonte.
+## Tecnologias
 
-A documentação deve ser baseada no que realmente existe no projeto, e não em funcionalidades planejadas.
+A aplicação é construída utilizando as seguintes tecnologias e frameworks:
 
-Regras Obrigatórias
+- **Java 21**
+- **Spring Boot 4.0.6**
+- **Spring Data JPA & Hibernate**
+- **Spring Security & OAuth2 Resource Server**
+- **MariaDB** (Produção/Desenvolvimento)
+- **H2 Database** (Ambiente de Testes)
+- **Maven**
+- **JWT (JJWT 0.12.6)**
+- **Lombok**
+- **MapStruct 1.5.5**
+- **Swagger / OpenAPI (Springdoc 2.8.9)**
+- **JUnit 5 & Mockito**
 
-1. Não inventar funcionalidades
+---
 
-Não documente nada que não exista.
+## Arquitetura
 
-Antes de mencionar uma feature, confirme sua implementação analisando:
+O projeto adota uma arquitetura em camadas focada em domínios (_Feature-Based_). Toda lógica e persistência estão bem separadas, respeitando o princípio de responsabilidade única (SOLID). Utilizamos o padrão de DTOs para tráfego externo e MapStruct para tradução ágil entre DTO e Entidade. As respostas HTTP são padronizadas com a classe `ApiResponse` e o tratamento de erros é centralizado no `GlobalExceptionHandler`.
 
-Controllers
-Services
-Entities
-Repositories
-DTOs
-Configurações
-Testes
+### Árvore Resumida do Projeto
 
-Caso alguma funcionalidade esteja incompleta, informe isso claramente.
-
-2. Estrutura do README
-
-O README deve possuir, no mínimo, as seguintes seções.
-
-Nome do Projeto
-
-Descrição objetiva do sistema.
-
-Objetivo
-
-Explicar que o sistema é um gerenciador financeiro pessoal e compartilhado.
-
-Descrever os principais recursos já implementados.
-
-Tecnologias
-
-Listar todas as tecnologias realmente utilizadas.
-
-Exemplo:
-
-Java 21
-Spring Boot
-Spring Security
-Spring Data JPA
-Hibernate
-MariaDB
-Maven
-JWT
-Lombok
-MapStruct
-Swagger/OpenAPI
-JUnit 5
-Mockito
-Arquitetura
-
-Explicar a arquitetura utilizada.
-
-Exemplo:
-
-Controller
-Service
-Service Interface
-Repository
-Entity
-DTO
-Mapper (MapStruct)
-Security
-Common
-Exception Handler
-
-Mostrar uma árvore resumida do projeto.
-
-Exemplo:
-
+```text
 src/main/java
+└── com/financeiro/backend
+    ├── common
+    │   ├── dto         (ApiResponse)
+    │   └── exception   (GlobalExceptionHandler)
+    ├── config          (SwaggerConfig, etc.)
+    ├── security        (SecurityFilterChain, Jwt Filters, PasswordReset)
+    └── features
+        ├── auth        (User e UserRole)
+        ├── profile     (UserProfile)
+        ├── wallet      (Wallet e Members)
+        ├── category    (Category Income/Expense/Transfer)
+        ├── transaction (Transaction core)
+        ├── subscription(Plans e UserSubscription)
+        ├── reports     (Queries, Projections, Dashboards)
+        └── finance     (Engine de processamento de saldos)
+```
 
-common
+### Estrutura de Features
 
-config
+- **Auth & Security**: Gerenciamento do fluxo de autenticação e solicitação de troca de senha.
+- **User**: Criação, atualização e listagem da conta raiz dos usuários (Register).
+- **Profile**: Dados adicionais ao usuário como avatar, nome completo e telefone.
+- **Wallet**: Criação e compartilhamento de contas correntes, cartões e limites. Inclui gestão de permissões para membros (`VIEWER`, `EDITOR`, `OWNER`).
+- **Category**: Classificação de finanças (Receitas, Despesas, Transferências).
+- **Transaction**: Registro de todas as movimentações.
+- **Subscription**: Controle de planos (ex: Premium) e gestão de cotas máximas para carteiras e categorias.
+- **Reports**: Módulo exclusivamente de leitura otimizado (Dashboards, Extratos com paginação, Fluxo de Caixa). Separado da camada de transação.
+- **Finance**: Core contábil interno (não exposto em Controller). Garante a consistência dos saldos das carteiras recalculando e aplicando estornos caso uma transação seja editada ou excluída.
 
-security
+---
 
-features
+## Banco de Dados
 
-auth
+Abaixo, a representação estrutural unificada do banco em um diagrama relacional simplificado.
 
-user
-
-profile
-
-wallet
-
-category
-
-transaction
-
-subscription
-
-reports
-
-finance
-Estrutura de Features
-
-Explicar a responsabilidade de cada módulo.
-
-Por exemplo:
-
-Auth
-Login
-JWT
-Reset de senha
-User
-Cadastro
-Atualização
-Exclusão
-Profile
-Informações complementares do usuário
-Wallet
-Carteiras
-Category
-Categorias
-Transaction
-Receitas
-Despesas
-Transferências
-Subscription
-Planos
-Reports
-Dashboard
-Indicadores
-Extratos
-Finance
-Processamento financeiro
-Recalculo de saldo
-Auditoria
-Banco de Dados
-
-Explicar as principais entidades.
-
-Incluir um diagrama simples em Mermaid.
-
-Exemplo:
-
+```mermaid
 erDiagram
+    User ||--|| UserProfile : has
+    User ||--o{ Wallet : owns
+    Wallet ||--o{ WalletMember : allows
+    Wallet ||--o{ Category : contains
+    Wallet ||--o{ Transaction : records
+    Category ||--o{ Transaction : classifies
+    SubscriptionPlan ||--o{ UserSubscription : offers
+    User ||--o{ UserSubscription : subscribes
+```
 
-User ||--|| UserProfile
+---
 
-User ||--o{ Wallet
+## Funcionalidades Implementadas
 
-Wallet ||--o{ Category
+✅ Cadastro de Usuário (Register)  
+✅ Perfil de Usuário  
+✅ Reset de Senha (Request/Confirm)  
+✅ Gestão de Assinaturas e Planos (Limites de Sistema)  
+✅ Carteiras Pessoais e Compartilhadas (Membros)  
+✅ Categorias (Receitas, Despesas e Transferências)  
+✅ Transações de Receita e Despesa  
+✅ Transferências entre Carteiras  
+✅ Auditoria Financeira Interna (Engine de Saldos)  
+✅ Dashboard Consolidado  
+✅ Extratos com Filtros (Specifications)  
+✅ Indicadores Analíticos  
+✅ Documentação Swagger (OpenAPI)  
+✅ Testes Unitários e Cobertura (JUnit + Mockito)
 
-Wallet ||--o{ Transaction
+---
 
-Category ||--o{ Transaction
+## Funcionalidades Futuras
 
-SubscriptionPlan ||--o{ UserSubscription
-Funcionalidades Implementadas
+O projeto continua em evolução. As seguintes funcionalidades estão no planejamento e ainda não foram implementadas:
 
-Criar uma checklist.
+- **Autenticação JWT (Login) e Proteção de Rotas (Spring Security FilterChain)** _(Próxima Sprint)_
+- Gamificação e Pontuações
+- Metas financeiras e Orçamentos Fixos
+- Notificações de Pagamentos e Vencimentos
+- Upload de comprovantes (Storage)
+- Integração Open Finance / API Bancária
+- Aplicativo Mobile
 
-Exemplo:
+---
 
-✅ Login
+## Como Executar
 
-✅ JWT
+### 1. Clonar o Repositório
 
-✅ Cadastro de usuário
+```bash
+git clone <url-do-repositorio>
+cd pw-gerenciamento-financeiro/back-end
+```
 
-✅ Perfil
+### 2. Configurar o Banco de Dados
 
-✅ Carteiras
+A aplicação utiliza o **MariaDB** por padrão. Crie um banco local:
 
-✅ Categorias
-
-✅ Receitas
-
-✅ Despesas
-
-✅ Transferências
-
-✅ Auditoria Financeira
-
-✅ Dashboard
-
-✅ Relatórios
-
-✅ Swagger
-
-✅ Testes Unitários
-Funcionalidades Futuras
-
-Listar apenas funcionalidades ainda não implementadas.
-
-Exemplo:
-
-Gamificação
-Metas financeiras
-Notificações
-Upload de comprovantes
-Integração bancária
-Aplicativo mobile
-Como executar
-
-Documentar todo o processo.
-
-Clonar
-git clone ...
-Banco
-
-Criar banco
-
+```sql
 CREATE DATABASE financeiro_db;
-Configurar
+```
 
-Mostrar exemplo do application.properties.
+Ajuste as credenciais no arquivo `src/main/resources/application.properties` se necessário:
 
-Rodar
+```properties
+spring.datasource.url=jdbc:mariadb://localhost:3306/financeiro_db
+spring.datasource.username=root
+spring.datasource.password=sua-senha
+spring.jpa.hibernate.ddl-auto=update
+```
+
+### 3. Executar o Projeto
+
+Via Maven Wrapper (Linux/Mac):
+
+```bash
+./mvnw clean install
 ./mvnw spring-boot:run
+```
 
-ou
+Via Maven Wrapper (Windows):
 
-mvn spring-boot:run
-Swagger
+```cmd
+.\mvnw.cmd clean install
+.\mvnw.cmd spring-boot:run
+```
 
-Informar a URL correta.
+A API estará disponível localmente em: `http://localhost:8080/`
 
-Exemplo:
+---
 
-http://localhost:8080/swagger-ui.html
+## Testes
 
-ou a URL realmente implementada no projeto.
+A arquitetura financeira e de relatórios foi extensamente testada para garantir consistência de saldos (Transactions vs FinanceService).
 
-Documentação da API
+Para rodar a suíte de testes unitários localmente (utilizando banco H2 em memória):
 
-Informar onde está:
+```bash
+./mvnw test
+```
 
-docs/api/API_TESTS.md
+---
 
-e
+## Documentação da API
 
-docs/insomnia/
-Testes
+1. **Swagger / OpenAPI**
+   Assim que o servidor rodar, acesse a interface visual em:  
+   👉 [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 
-Explicar como executar.
+2. **Guia Completo e Testes Manuais**
+   Exemplos reais e validados contra o código:
+   - [docs/api/API_TESTS.md](docs/api/API_TESTS.md)
 
-mvn test
-mvn clean install
-Segurança
+3. **Coleção Postman / Insomnia**
+   Há uma coleção completa com 20 requisições prontas e padronizadas para testes diretos. Importe no seu cliente de API favorito:
+   - [docs/insomnia/Financeiro_API_Insomnia.json](docs/insomnia/Financeiro_API_Insomnia.json)
 
-Explicar resumidamente:
+---
 
-JWT
-PasswordEncoder
-Password Reset
-Spring Security
-Fluxo Geral
+## Segurança e Autenticação
 
-Criar um fluxograma Mermaid.
+A arquitetura de segurança atual conta com a estrutura para Reset de Senhas e o esqueleto de configuração do Spring Security e OAuth2.
+Atualmente, as rotas aguardam a implementação definitiva do AuthController de Login e dos filtros que validarão a sessão via token JWT (JwtAuthenticationFilter).
 
-Exemplo:
+### Fluxo Geral do Sistema (Com Auth Futuro)
 
+```mermaid
 flowchart TD
+    A[Login] --> B[Obtenção do JWT]
+    B --> C[Acesso a Wallet]
+    C --> D[Criação de Category]
+    D --> E[Lançamento de Transaction]
+    E --> F[Auditoria do FinancialService]
+    F --> G[Atualização do Dashboard via Reports]
+```
 
-Login
+---
 
-↓
+## Roadmap
 
-JWT
+| Sprint       | Status | Descrição                                                                |
+| ------------ | :----: | ------------------------------------------------------------------------ |
+| **Sprint 1** |   ✅   | Criação de Estrutura, Arquitetura, Padrão DTO e Exceções                 |
+| **Sprint 2** |   ✅   | Domínio Base: Usuários, Perfis, Configurações de Security                |
+| **Sprint 3** |   ✅   | Core Financeiro: Transações, Carteiras, Membros, Estornos e Recálculos   |
+| **Sprint 4** |   ✅   | CQRS Básico (Leitura): Dashboard, Extratos, Categorização, Indicadores   |
+| **Sprint 5** |   ⏳   | Segurança Avançada: Login real (Autenticação JWT), Proteção de Endpoints |
+| **Sprint 6** |   ⏳   | Assinaturas, Limites, Testes Finais de Integração                        |
+| **Sprint 7** |   ⏳   | Notificações, Gamificação e Metas                                        |
 
-↓
+---
 
-Wallet
+## Boas Práticas Adotadas
 
-↓
-
-Category
-
-↓
-
-Transaction
-
-↓
-
-FinancialService
-
-↓
-
-Reports
-
-↓
-
-Dashboard
-Roadmap
-
-Criar uma tabela.
-
-Sprint Status Descrição
-Sprint 1 ✅ Arquitetura
-Sprint 2 ✅ Regras de negócio
-Sprint 3 ✅ Core Financeiro
-Sprint 4 ✅ Dashboards e Relatórios
-Sprint 5 ⏳ Gamificação
-Boas Práticas
-
-Documentar os padrões adotados.
-
-DTOs
-ApiResponse
-GlobalExceptionHandler
-MapStruct
-Interfaces de Service
-Testes Unitários
-Princípios SOLID
-Clean Code
-Qualidade
-
-O README deve servir como documentação oficial do projeto.
-
-Ele deve permitir que um desenvolvedor novo compreenda:
-
-o objetivo do sistema;
-a arquitetura utilizada;
-como executar o projeto;
-como testar a API;
-como está organizada a base de código;
-quais funcionalidades já existem;
-quais ainda serão implementadas.
-
-Não utilizar informações fictícias. Todo o conteúdo deve ser validado contra o código-fonte atual antes de ser escrito.
+- **DTO Pattern**: Nunca retornar ou expor Entidades (`@Entity`) diretamente nos Controllers.
+- **MapStruct**: Mapeamento seguro de ponta a ponta sem boilerplate ou _Transient Exceptions_.
+- **ApiResponse**: Todo output da API tem o mesmo formato unificado (`success`, `message`, `data`).
+- **GlobalExceptionHandler**: Tratamento global de falhas capturando `IllegalArgumentException`, `ResourceNotFoundException` e padronizando os erros do `jakarta.validation`.
+- **Clean Code & SOLID**: As lógicas financeiras mais pesadas estão segregadas no `FinancialService`, enquanto as leituras foram movidas para `FinancialReportService`, removendo as regras do banco dos Controllers.
