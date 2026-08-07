@@ -1,103 +1,339 @@
-# Sistema de Controle Financeiro
+Atualização completa do README.md
 
-Backend Java/Spring Boot para controle financeiro pessoal e compartilhado, preparado para autenticação JWT, RBAC, documentação OpenAPI e testes automatizados.
+O projeto evoluiu significativamente desde a criação do README atual. Diversas features, módulos e padrões arquiteturais foram implementados, tornando a documentação desatualizada.
 
-## Tecnologias
+Objetivo
 
-- Java 21
-- Spring Boot
-- Spring Security
-- JWT
-- Spring Data JPA
-- Hibernate
-- MariaDB/MySQL
-- Maven
-- Lombok
-- JUnit 5
-- Mockito
-- H2 para testes
-- Swagger/OpenAPI
+Reescrever completamente o arquivo README.md para refletir o estado atual do projeto.
 
-## Arquitetura
+Antes de escrever qualquer conteúdo, analise todo o código-fonte.
 
-O backend segue uma organização em camadas e por feature:
+A documentação deve ser baseada no que realmente existe no projeto, e não em funcionalidades planejadas.
 
-- `controller` recebe a requisição HTTP
-- `service` concentra as regras de negócio
-- `repository` faz a persistência com Spring Data JPA
-- `dto` evita expor entidades diretamente
-- `entity` representa o modelo de domínio persistido
-- `mapper` converte entidade para resposta
-- `security` centraliza autenticação e autorização JWT
-- `common` reúne respostas padronizadas e tratamento global de exceções
+Regras Obrigatórias
 
-### Estrutura principal
+1. Não inventar funcionalidades
 
-- `src/main/java/com/financeiro/backend/config`
-- `src/main/java/com/financeiro/backend/security`
-- `src/main/java/com/financeiro/backend/common`
-- `src/main/java/com/financeiro/backend/features`
+Não documente nada que não exista.
 
-### Features iniciais
+Antes de mencionar uma feature, confirme sua implementação analisando:
 
-- `auth`
-- `user`
+Controllers
+Services
+Entities
+Repositories
+DTOs
+Configurações
+Testes
 
-As features de `dashboard`, `transaction`, `category` e `sharedwallet` já estão reservadas para expansão.
+Caso alguma funcionalidade esteja incompleta, informe isso claramente.
 
-## Execução
+2. Estrutura do README
 
-### Backend
+O README deve possuir, no mínimo, as seguintes seções.
 
-```bash
-cd back-end
-./mvnw.cmd spring-boot:run
-```
+Nome do Projeto
 
-### Testes
+Descrição objetiva do sistema.
 
-```bash
-cd back-end
-./mvnw.cmd test
-```
+Objetivo
 
-## Banco de dados
+Explicar que o sistema é um gerenciador financeiro pessoal e compartilhado.
 
-Configuração local padrão:
+Descrever os principais recursos já implementados.
 
-- URL: `jdbc:mariadb://localhost:3306/financeiro_db`
-- Usuário: `root`
-- Senha: vazia
+Tecnologias
 
-Os testes usam H2 em memória para não depender de infraestrutura externa.
+Listar todas as tecnologias realmente utilizadas.
 
-## Segurança
+Exemplo:
 
-- Autenticação JWT stateless
-- Senhas com BCrypt
-- RBAC com roles `USER` e `ADMIN`
-- Filtro JWT para proteger endpoints
+Java 21
+Spring Boot
+Spring Security
+Spring Data JPA
+Hibernate
+MariaDB
+Maven
+JWT
+Lombok
+MapStruct
+Swagger/OpenAPI
+JUnit 5
+Mockito
+Arquitetura
 
-Endpoints públicos atuais:
+Explicar a arquitetura utilizada.
 
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `GET /swagger-ui.html`
-- `GET /api-docs`
+Exemplo:
 
-Endpoints protegidos atuais:
+Controller
+Service
+Service Interface
+Repository
+Entity
+DTO
+Mapper (MapStruct)
+Security
+Common
+Exception Handler
 
-- `GET /api/v1/users/{id}`
-- `GET /api/v1/users/by-email?email=...`
+Mostrar uma árvore resumida do projeto.
 
-## Documentação
+Exemplo:
 
-- Swagger/OpenAPI habilitado via Springdoc
-- ADRs em `docs/adr`
+src/main/java
 
-## Próximos passos naturais
+common
 
-- Cadastro de carteiras e membros
-- Receita e despesa com categorias
-- Recuperação de senha com token expirável
-- Auditoria de lançamentos e dashboard financeiro
+config
+
+security
+
+features
+
+auth
+
+user
+
+profile
+
+wallet
+
+category
+
+transaction
+
+subscription
+
+reports
+
+finance
+Estrutura de Features
+
+Explicar a responsabilidade de cada módulo.
+
+Por exemplo:
+
+Auth
+Login
+JWT
+Reset de senha
+User
+Cadastro
+Atualização
+Exclusão
+Profile
+Informações complementares do usuário
+Wallet
+Carteiras
+Category
+Categorias
+Transaction
+Receitas
+Despesas
+Transferências
+Subscription
+Planos
+Reports
+Dashboard
+Indicadores
+Extratos
+Finance
+Processamento financeiro
+Recalculo de saldo
+Auditoria
+Banco de Dados
+
+Explicar as principais entidades.
+
+Incluir um diagrama simples em Mermaid.
+
+Exemplo:
+
+erDiagram
+
+User ||--|| UserProfile
+
+User ||--o{ Wallet
+
+Wallet ||--o{ Category
+
+Wallet ||--o{ Transaction
+
+Category ||--o{ Transaction
+
+SubscriptionPlan ||--o{ UserSubscription
+Funcionalidades Implementadas
+
+Criar uma checklist.
+
+Exemplo:
+
+✅ Login
+
+✅ JWT
+
+✅ Cadastro de usuário
+
+✅ Perfil
+
+✅ Carteiras
+
+✅ Categorias
+
+✅ Receitas
+
+✅ Despesas
+
+✅ Transferências
+
+✅ Auditoria Financeira
+
+✅ Dashboard
+
+✅ Relatórios
+
+✅ Swagger
+
+✅ Testes Unitários
+Funcionalidades Futuras
+
+Listar apenas funcionalidades ainda não implementadas.
+
+Exemplo:
+
+Gamificação
+Metas financeiras
+Notificações
+Upload de comprovantes
+Integração bancária
+Aplicativo mobile
+Como executar
+
+Documentar todo o processo.
+
+Clonar
+git clone ...
+Banco
+
+Criar banco
+
+CREATE DATABASE financeiro_db;
+Configurar
+
+Mostrar exemplo do application.properties.
+
+Rodar
+./mvnw spring-boot:run
+
+ou
+
+mvn spring-boot:run
+Swagger
+
+Informar a URL correta.
+
+Exemplo:
+
+http://localhost:8080/swagger-ui.html
+
+ou a URL realmente implementada no projeto.
+
+Documentação da API
+
+Informar onde está:
+
+docs/api/API_TESTS.md
+
+e
+
+docs/insomnia/
+Testes
+
+Explicar como executar.
+
+mvn test
+mvn clean install
+Segurança
+
+Explicar resumidamente:
+
+JWT
+PasswordEncoder
+Password Reset
+Spring Security
+Fluxo Geral
+
+Criar um fluxograma Mermaid.
+
+Exemplo:
+
+flowchart TD
+
+Login
+
+↓
+
+JWT
+
+↓
+
+Wallet
+
+↓
+
+Category
+
+↓
+
+Transaction
+
+↓
+
+FinancialService
+
+↓
+
+Reports
+
+↓
+
+Dashboard
+Roadmap
+
+Criar uma tabela.
+
+Sprint Status Descrição
+Sprint 1 ✅ Arquitetura
+Sprint 2 ✅ Regras de negócio
+Sprint 3 ✅ Core Financeiro
+Sprint 4 ✅ Dashboards e Relatórios
+Sprint 5 ⏳ Gamificação
+Boas Práticas
+
+Documentar os padrões adotados.
+
+DTOs
+ApiResponse
+GlobalExceptionHandler
+MapStruct
+Interfaces de Service
+Testes Unitários
+Princípios SOLID
+Clean Code
+Qualidade
+
+O README deve servir como documentação oficial do projeto.
+
+Ele deve permitir que um desenvolvedor novo compreenda:
+
+o objetivo do sistema;
+a arquitetura utilizada;
+como executar o projeto;
+como testar a API;
+como está organizada a base de código;
+quais funcionalidades já existem;
+quais ainda serão implementadas.
+
+Não utilizar informações fictícias. Todo o conteúdo deve ser validado contra o código-fonte atual antes de ser escrito.
