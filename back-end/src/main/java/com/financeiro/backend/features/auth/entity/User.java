@@ -15,8 +15,11 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import org.hibernate.annotations.UuidGenerator;
 
+import com.financeiro.backend.features.auth.enums.Role;
 import com.financeiro.backend.features.profile.entity.UserProfile;
 
 import lombok.Data;
@@ -48,7 +51,10 @@ public class User {
     @NotNull(message = "{active.obrigatorio}")
     private Boolean active;
 
-     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private UserProfile profile;
 
     @Override

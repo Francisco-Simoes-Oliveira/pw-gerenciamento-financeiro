@@ -7,4 +7,5 @@ import com.financeiro.backend.features.wallet.entity.Wallet;
 
 @Repository
 public interface WalletRepository extends JpaRepository<Wallet, UUID> {
+    long countByOwnerId(UUID ownerId);
 }

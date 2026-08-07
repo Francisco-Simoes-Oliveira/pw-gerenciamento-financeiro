@@ -9,7 +9,7 @@ public class SubscriptionPlanResponse {
     private UUID id;
     private String name;
     private String description;
-    private Double price;
+    private java.math.BigDecimal price;
     private Integer maxWallets;
     private Integer maxMembersPerWallet;
     private Integer maxCategories;

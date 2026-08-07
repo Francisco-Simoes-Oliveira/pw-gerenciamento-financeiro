@@ -7,4 +7,5 @@ import com.financeiro.backend.features.transaction.entity.Transaction;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
+    boolean existsByWalletId(UUID walletId);
 }

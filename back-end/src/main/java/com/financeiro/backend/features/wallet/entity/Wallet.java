@@ -18,8 +18,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import jakarta.persistence.Index;
+
 @Entity
-@Table(name = "wallet")
+@Table(name = "wallet", indexes = {
+    @Index(name = "idx_wallet_owner_id", columnList = "owner_id")
+})
 @Data
 @Builder
 @NoArgsConstructor
@@ -38,7 +42,10 @@ public class Wallet {
     private String currency;
     private Boolean active;
     private LocalDateTime createdAt;
-    
     private String color;
     private String icon;
+
+    @Builder.Default
+    private java.math.BigDecimal balance = java.math.BigDecimal.ZERO;
+    private LocalDateTime lastBalanceUpdate;
 }

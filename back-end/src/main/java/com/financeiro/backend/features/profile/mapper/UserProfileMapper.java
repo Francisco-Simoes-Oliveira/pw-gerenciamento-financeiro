@@ -13,7 +13,7 @@ import com.financeiro.backend.features.profile.entity.UserProfile;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface UserProfileMapper {
 
-    @Mapping(target = "user.id", source = "userId")
+    @Mapping(target = "user", ignore = true)
     UserProfile toEntity(CreateUserProfileRequest request);
 
     @Mapping(target = "userId", source = "user.id")

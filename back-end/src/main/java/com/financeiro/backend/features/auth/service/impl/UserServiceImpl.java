@@ -26,10 +26,19 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserMapper mapper;
 
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @Override
     public UserResponse insert(CreateUserRequest request) {
+        if (repository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException("O e-mail informado já está em uso.");
+        }
+
         User user = mapper.toEntity(request);
         user.setActive(true);
+        user.setRole(com.financeiro.backend.features.auth.enums.Role.USER); // Default role
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
         User saved = repository.save(user);
         return mapper.toResponse(saved);
@@ -51,13 +60,31 @@ public class UserServiceImpl implements UserService {
     @Override
     public void remove(UUID id) {
         User user = findEntityById(id);
+        if (com.financeiro.backend.features.auth.enums.Role.ADMIN.equals(user.getRole())) {
+            long adminCount = repository.countByRole(com.financeiro.backend.features.auth.enums.Role.ADMIN);
+            if (adminCount <= 1) {
+                throw new IllegalArgumentException("Não é possível remover o último administrador do sistema.");
+            }
+        }
         repository.delete(user);
     }
 
     @Override
     public UserResponse alter(UUID id, UpdateUserRequest request) {
         User userDB = findEntityById(id);
+
+        if (request.getEmail() != null && !request.getEmail().equals(userDB.getEmail())) {
+            if (repository.existsByEmail(request.getEmail())) {
+                throw new IllegalArgumentException("O e-mail informado já está em uso.");
+            }
+        }
+
         mapper.updateEntityFromDto(request, userDB);
+        
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            userDB.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
         userDB.setUpdatedAt(LocalDateTime.now());
         User updated = repository.save(userDB);
         return mapper.toResponse(updated);

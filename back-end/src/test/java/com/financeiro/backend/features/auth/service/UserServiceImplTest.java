@@ -33,6 +33,9 @@ public class UserServiceImplTest {
     @Mock
     private UserMapper userMapper;
 
+    @Mock
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -83,6 +86,7 @@ public class UserServiceImplTest {
         mockResponse.setName("Test");
 
         when(userMapper.toEntity(request)).thenReturn(user);
+        when(passwordEncoder.encode(any())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
         when(userMapper.toResponse(savedUser)).thenReturn(mockResponse);
 

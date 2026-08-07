@@ -18,4 +18,6 @@ public class UpdateUserRequest {
     @Email(message = "{email.invalido}")
     @NotBlank(message = "{email.obrigatorio}")
     private String email;
+
+    private String password;
 }

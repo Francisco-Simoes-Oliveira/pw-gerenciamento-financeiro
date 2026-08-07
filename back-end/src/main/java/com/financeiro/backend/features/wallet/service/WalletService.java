@@ -10,11 +10,10 @@ import com.financeiro.backend.features.wallet.dto.response.WalletResponse;
 public interface WalletService {
     WalletResponse insert(UUID ownerId, CreateWalletRequest request);
     List<WalletResponse> listByOwner(UUID ownerId);
-    WalletResponse searchById(UUID id);
-    WalletResponse alter(UUID id, UpdateWalletRequest request);
-    void remove(UUID id);
+    WalletResponse searchById(UUID id, UUID currentUserId);
+    WalletResponse alter(UUID id, UUID currentUserId, UpdateWalletRequest request);
+    void remove(UUID id, UUID currentUserId);
     
-    // Métodos para membros poderiam entrar aqui ou em um WalletMemberService separado
-    void addMember(UUID walletId, UUID userId, String permission);
-    void removeMember(UUID walletId, UUID userId);
+    void addMember(UUID walletId, UUID currentUserId, UUID targetUserId, String permission);
+    void removeMember(UUID walletId, UUID currentUserId, UUID targetUserId);
 }

@@ -12,7 +12,7 @@ public class CreateSubscriptionPlanRequest {
     private String description;
     
     @NotNull(message = "{price.obrigatorio}")
-    private Double price;
+    private java.math.BigDecimal price;
     
     private Integer maxWallets;
     private Integer maxMembersPerWallet;

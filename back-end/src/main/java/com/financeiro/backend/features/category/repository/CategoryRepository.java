@@ -7,4 +7,6 @@ import com.financeiro.backend.features.category.entity.Category;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
+    boolean existsByWalletIdAndName(UUID walletId, String name);
+    long countByWalletId(UUID walletId);
 }

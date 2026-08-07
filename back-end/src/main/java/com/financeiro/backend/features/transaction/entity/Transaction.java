@@ -24,8 +24,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import jakarta.persistence.Index;
+
 @Entity
-@Table(name = "transaction")
+@Table(name = "transaction", indexes = {
+    @Index(name = "idx_transaction_wallet_id", columnList = "wallet_id"),
+    @Index(name = "idx_transaction_category_id", columnList = "category_id"),
+    @Index(name = "idx_transaction_created_by", columnList = "created_by"),
+    @Index(name = "idx_transaction_type", columnList = "type"),
+    @Index(name = "idx_transaction_status", columnList = "status"),
+    @Index(name = "idx_transaction_created_at", columnList = "created_at")
+})
 @Data
 @Builder
 @NoArgsConstructor
@@ -38,6 +47,10 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "wallet_id", nullable = false)
     private Wallet wallet;
+    
+    @ManyToOne
+    @JoinColumn(name = "destination_wallet_id", nullable = true)
+    private Wallet destinationWallet;
 
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
@@ -49,7 +62,7 @@ public class Transaction {
 
     private String title;
     private String description;
-    private Double amount;
+    private java.math.BigDecimal amount;
     
     private LocalDateTime transactionDate;
 

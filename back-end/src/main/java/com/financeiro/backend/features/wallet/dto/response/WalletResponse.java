@@ -13,4 +13,6 @@ public class WalletResponse {
     private Boolean active;
     private String color;
     private String icon;
+    private java.math.BigDecimal balance;
+    private java.time.LocalDateTime lastBalanceUpdate;
 }

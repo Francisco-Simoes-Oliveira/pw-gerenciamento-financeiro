@@ -20,8 +20,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import jakarta.persistence.Index;
+
 @Entity
-@Table(name = "category")
+@Table(name = "category", indexes = {
+    @Index(name = "idx_category_owner_id", columnList = "owner_id"),
+    @Index(name = "idx_category_type", columnList = "type")
+})
 @Data
 @Builder
 @NoArgsConstructor
