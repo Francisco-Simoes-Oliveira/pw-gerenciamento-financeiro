@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import authService from "@/services/authService"
 import * as AppRoutes from "@/routes/AppRoutes"
 
 const verifySchema = z
@@ -48,17 +49,17 @@ export default function VerifyCode() {
     setErrorMessage("")
     setSuccessMessage("")
     try {
-      console.log("Verifying Reset Code and Password:", data)
+      await authService.confirmPasswordReset(data.code, data.password)
+      
+      setLoading(false)
+      setSuccessMessage("Senha redefinida com sucesso! Você está sendo redirecionado...")
       setTimeout(() => {
-        setLoading(false)
-        setSuccessMessage("Senha redefinida com sucesso! Você está sendo redirecionado...")
-        setTimeout(() => {
-          navigate(AppRoutes.Login)
-        }, 1500)
-      }, 1200)
+        navigate(AppRoutes.Login)
+      }, 1500)
     } catch (err) {
       setLoading(false)
-      setErrorMessage("Código inválido ou expirado. Verifique os dados.")
+      const msg = err.response?.data?.message || err.response?.data || "Código inválido ou expirado. Verifique os dados."
+      setErrorMessage(msg)
     }
   }
 

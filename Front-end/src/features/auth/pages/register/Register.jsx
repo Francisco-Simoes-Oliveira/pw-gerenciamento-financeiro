@@ -9,10 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import UserService from "@/features/auth/service/UserService"
+import authService from "@/services/authService"
 import * as AppRoutes from "@/routes/AppRoutes"
-
-const userService = new UserService()
 
 // Zod validation schema matching register
 const registerSchema = z
@@ -71,12 +69,23 @@ export default function Register() {
         name: data.name.trim(),
         email: data.email.trim(),
         password: data.password,
-        active: true,
       }
 
-      const response = await userService.register(payload)
+      const response = await authService.register(payload)
 
       if (response.status === 200 || response.status === 201) {
+        const userId = response.data?.data?.id
+        
+        if (userId) {
+           await authService.createProfile(userId, {
+              userId: userId,
+              fullName: payload.name,
+              birthDate: "2000-01-01", // fallback
+              phone: "",
+              avatarUrl: ""
+           })
+        }
+
         setSuccessMessage("Cadastro realizado com sucesso! Redirecionando...")
         setTimeout(() => {
           setLoading(false)

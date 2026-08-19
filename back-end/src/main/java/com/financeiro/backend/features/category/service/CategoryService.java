@@ -8,9 +8,10 @@ import com.financeiro.backend.features.category.dto.request.UpdateCategoryReques
 import com.financeiro.backend.features.category.dto.response.CategoryResponse;
 
 public interface CategoryService {
-    CategoryResponse insert(CreateCategoryRequest request);
-    List<CategoryResponse> listByWallet(UUID walletId);
-    CategoryResponse searchById(UUID id);
-    CategoryResponse alter(UUID id, UpdateCategoryRequest request);
-    void remove(UUID id);
+    CategoryResponse insert(CreateCategoryRequest request, UUID currentUserId);
+    List<CategoryResponse> listByWallet(UUID walletId, UUID currentUserId);
+    CategoryResponse searchById(UUID id, UUID currentUserId);
+    CategoryResponse alter(UUID id, UpdateCategoryRequest request, UUID currentUserId);
+    void remove(UUID id, UUID currentUserId);
 }
+

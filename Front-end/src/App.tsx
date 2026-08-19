@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
+import { Toaster } from 'sonner'
 import Login from "./features/auth/pages/login/Login"
 import Register from "./features/auth/pages/register/Register"
 import ForgotPassword from "./features/auth/pages/forgotPassword/ForgotPassword"
@@ -38,10 +39,10 @@ export function App() {
             <Route path="/profile" element={<Profile />} />
           </Route>
 
-          {/* Fallback route */}
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
       </BrowserRouter>
+      <Toaster position="top-right" richColors />
     </div>
   )
 }

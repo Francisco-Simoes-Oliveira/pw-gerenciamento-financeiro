@@ -1,4 +1,5 @@
 import { useState } from "react"
+import authService from "@/services/authService"
 import { useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -41,13 +42,14 @@ export default function Login() {
     setLoading(true)
     setErrorMessage("")
     try {
-      // Mock login validation
-      console.log("Submit Login Data:", data)
-      // Simulating a successful network authentication response
-      setTimeout(() => {
-        setLoading(false)
-        navigate(AppRoutes.Dashboard)
-      }, 1000)
+      const response = await authService.login(data)
+      const { token, user } = response.data.data
+      
+      localStorage.setItem("app-token", token)
+      localStorage.setItem("usuario", JSON.stringify(user))
+
+      setLoading(false)
+      navigate(AppRoutes.Dashboard)
     } catch (err) {
       setLoading(false)
       setErrorMessage("E-mail corporativo ou senha incorretos.")

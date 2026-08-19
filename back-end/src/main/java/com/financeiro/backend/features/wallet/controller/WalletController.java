@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,7 @@ import com.financeiro.backend.features.wallet.dto.request.CreateWalletRequest;
 import com.financeiro.backend.features.wallet.dto.request.UpdateWalletRequest;
 import com.financeiro.backend.features.wallet.dto.response.WalletResponse;
 import com.financeiro.backend.features.wallet.service.WalletService;
+import com.financeiro.backend.security.services.UserDetailsImpl;
 
 @RestController
 @RequestMapping("/api/wallets")
@@ -32,42 +34,48 @@ public class WalletController {
     @Autowired
     private WalletService service;
 
+    private UUID getCurrentUserId() {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return userDetails.getId();
+    }
+
     @PostMapping
-    public ResponseEntity<ApiResponse<WalletResponse>> insert(@RequestParam UUID ownerId, @Valid @RequestBody CreateWalletRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(service.insert(ownerId, request)));
+    public ResponseEntity<ApiResponse<WalletResponse>> insert(@Valid @RequestBody CreateWalletRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(service.insert(getCurrentUserId(), request)));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<WalletResponse>>> listByOwner(@RequestParam UUID ownerId) {
-        return ResponseEntity.ok(ApiResponse.success(service.listByOwner(ownerId)));
+    public ResponseEntity<ApiResponse<List<WalletResponse>>> listByOwner() {
+        return ResponseEntity.ok(ApiResponse.success(service.listByOwner(getCurrentUserId())));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<WalletResponse>> searchById(@PathVariable UUID id, @RequestParam UUID currentUserId) {
-        return ResponseEntity.ok(ApiResponse.success(service.searchById(id, currentUserId)));
+    public ResponseEntity<ApiResponse<WalletResponse>> searchById(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(service.searchById(id, getCurrentUserId())));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<WalletResponse>> alter(@PathVariable UUID id, @RequestParam UUID currentUserId, @Valid @RequestBody UpdateWalletRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(service.alter(id, currentUserId, request)));
+    public ResponseEntity<ApiResponse<WalletResponse>> alter(@PathVariable UUID id, @Valid @RequestBody UpdateWalletRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(service.alter(id, getCurrentUserId(), request)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> remove(@PathVariable UUID id, @RequestParam UUID currentUserId) {
-        service.remove(id, currentUserId);
+    public ResponseEntity<ApiResponse<Void>> remove(@PathVariable UUID id) {
+        service.remove(id, getCurrentUserId());
         return ResponseEntity.ok(ApiResponse.success(null, "Carteira removida com sucesso."));
     }
 
     // Endpoints de Membros
     @PostMapping("/{id}/members/{targetUserId}")
-    public ResponseEntity<ApiResponse<Void>> addMember(@PathVariable UUID id, @RequestParam UUID currentUserId, @PathVariable UUID targetUserId, @RequestParam String permission) {
-        service.addMember(id, currentUserId, targetUserId, permission);
+    public ResponseEntity<ApiResponse<Void>> addMember(@PathVariable UUID id, @PathVariable UUID targetUserId, @RequestParam String permission) {
+        service.addMember(id, getCurrentUserId(), targetUserId, permission);
         return ResponseEntity.ok(ApiResponse.success(null, "Membro adicionado com sucesso."));
     }
 
     @DeleteMapping("/{id}/members/{targetUserId}")
-    public ResponseEntity<ApiResponse<Void>> removeMember(@PathVariable UUID id, @RequestParam UUID currentUserId, @PathVariable UUID targetUserId) {
-        service.removeMember(id, currentUserId, targetUserId);
+    public ResponseEntity<ApiResponse<Void>> removeMember(@PathVariable UUID id, @PathVariable UUID targetUserId) {
+        service.removeMember(id, getCurrentUserId(), targetUserId);
         return ResponseEntity.ok(ApiResponse.success(null, "Membro removido com sucesso."));
     }
 }
+

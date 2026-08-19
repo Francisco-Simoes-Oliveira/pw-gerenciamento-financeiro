@@ -19,9 +19,6 @@ public class CreateTransactionRequest {
     @NotNull(message = "{category.obrigatorio}")
     private UUID categoryId;
 
-    @NotNull(message = "{created_by.obrigatorio}")
-    private UUID createdById;
-
     @NotBlank(message = "{title.obrigatorio}")
     private String title;
 

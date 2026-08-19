@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import authService from "@/services/authService"
 import * as AppRoutes from "@/routes/AppRoutes"
 
 const forgotSchema = z.object({
@@ -37,17 +38,17 @@ export default function ForgotPassword() {
     setErrorMessage("")
     setSuccessMessage("")
     try {
-      console.log("Forgot Password Request Email:", data.email)
+      await authService.requestPasswordReset(data.email)
+      
+      setLoading(false)
+      setSuccessMessage("Código de redefinição enviado com sucesso! Verifique sua caixa de entrada.")
       setTimeout(() => {
-        setLoading(false)
-        setSuccessMessage("Código de redefinição enviado com sucesso! Verifique sua caixa de entrada.")
-        setTimeout(() => {
-          navigate(AppRoutes.VerifyCode)
-        }, 1500)
-      }, 1200)
+        navigate(AppRoutes.VerifyCode)
+      }, 1500)
     } catch (err) {
       setLoading(false)
-      setErrorMessage("Ocorreu um erro ao processar o seu pedido. Tente novamente.")
+      const msg = err.response?.data?.message || err.response?.data || "Ocorreu um erro ao processar o seu pedido. Tente novamente."
+      setErrorMessage(msg)
     }
   }
 
