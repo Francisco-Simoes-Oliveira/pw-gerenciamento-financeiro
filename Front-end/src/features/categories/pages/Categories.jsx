@@ -56,7 +56,7 @@ export default function Categories() {
       }
       try {
         setLoading(true)
-        const res = await walletService.getWallets(ownerId)
+        const res = await walletService.getWallets()
         if (res.data?.success && res.data.data.length > 0) {
           setWallets(res.data.data)
           const firstWalletId = res.data.data[0].id

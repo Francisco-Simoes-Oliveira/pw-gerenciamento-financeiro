@@ -46,14 +46,9 @@ export default function Wallets() {
   })
 
   const loadWallets = async () => {
-    if (!ownerId) {
-      setLoading(false)
-      return
-    }
-    
     try {
       setLoading(true)
-      const res = await walletService.getWallets(ownerId)
+      const res = await walletService.getWallets()
       if (res.data?.success) {
         setWallets(res.data.data)
       }
@@ -71,7 +66,7 @@ export default function Wallets() {
 
   const onSubmit = async (data) => {
     try {
-      await walletService.createWallet(data, ownerId)
+      await walletService.createWallet(data)
       toast.success("Carteira criada com sucesso!")
       setIsDialogOpen(false)
       reset()

@@ -1,8 +1,37 @@
 # Auth / Security API
 
-Neste momento, os endpoints implementados cobrem apenas a redefinição de senhas. 
-O cadastro de novos usuários está localizado no domínio **Users** (`POST /api/users`). 
-*(A geração de token JWT / Login ainda será implementada em Sprints futuras).*
+Este módulo agora suporta autenticação real via JWT (Spring Security).
+O cadastro de novos usuários está localizado no domínio **Users** (`POST /api/users`).
+
+---
+
+## 1. Login (Autenticação JWT)
+**Objetivo**: Autentica o usuário e retorna o token JWT para ser utilizado nas requisições.
+**Método HTTP**: `POST`
+**URL**: `http://localhost:8080/api/auth/login`
+**Headers**: `Content-Type: application/json`
+
+### Body (JSON)
+```json
+{
+  "email": "teste@email.com",
+  "password": "SenhaSegura123!"
+}
+```
+
+### Exemplo de Sucesso (200 OK)
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsIn...",
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "email": "teste@email.com",
+    "name": "Nome do Usuário"
+  }
+}
+```
 
 ---
 

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import com.financeiro.backend.common.dto.ApiResponse;
 import com.financeiro.backend.features.reports.dto.request.ReportFilter;
@@ -33,6 +34,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/api/reports")
 @Tag(name = "Reports", description = "Endpoints de relatórios, dashboards e indicadores consolidados.")
 @SecurityRequirement(name = "bearerAuth")
+@CrossOrigin(origins = "http://localhost:5174", maxAge = 3600)
 public class FinancialReportController {
 
     @Autowired

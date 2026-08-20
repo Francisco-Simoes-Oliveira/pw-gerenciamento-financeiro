@@ -97,7 +97,14 @@ export default function AppHeader({ isMobile, onMenuToggle }) {
               <span>Configurações</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/login")} className="text-destructive hover:bg-destructive/10">
+            <DropdownMenuItem 
+              onClick={() => {
+                localStorage.removeItem("app-token")
+                localStorage.removeItem("usuario")
+                navigate("/login")
+              }} 
+              className="text-destructive hover:bg-destructive/10"
+            >
               <LogOut className="mr-2 h-4 w-4" />
               <span>Sair da Conta</span>
             </DropdownMenuItem>

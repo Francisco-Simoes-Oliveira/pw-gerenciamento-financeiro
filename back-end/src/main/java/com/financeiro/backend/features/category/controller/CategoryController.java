@@ -28,7 +28,7 @@ import com.financeiro.backend.security.services.UserDetailsImpl;
 
 @RestController
 @RequestMapping("/api/categories")
-@CrossOrigin
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class CategoryController {
 
     @Autowired

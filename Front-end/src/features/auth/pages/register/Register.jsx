@@ -74,17 +74,6 @@ export default function Register() {
       const response = await authService.register(payload)
 
       if (response.status === 200 || response.status === 201) {
-        const userId = response.data?.data?.id
-        
-        if (userId) {
-           await authService.createProfile(userId, {
-              userId: userId,
-              fullName: payload.name,
-              birthDate: "2000-01-01", // fallback
-              phone: "",
-              avatarUrl: ""
-           })
-        }
 
         setSuccessMessage("Cadastro realizado com sucesso! Redirecionando...")
         setTimeout(() => {

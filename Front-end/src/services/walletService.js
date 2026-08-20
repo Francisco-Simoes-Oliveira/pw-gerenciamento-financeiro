@@ -1,20 +1,21 @@
 import api from '../config/axiosConfig';
 
 class WalletService {
-  async createWallet(data, ownerId) {
-    const response = await api.post(`/api/wallets?ownerId=${ownerId}`, data);
+  async createWallet(data) {
+    const response = await api.post(`/api/wallets`, data);
     return response;
   }
 
-  async getWallets(ownerId) {
-    const response = await api.get(`/api/wallets?ownerId=${ownerId}`);
+  async getWallets() {
+    const response = await api.get(`/api/wallets`);
     return response;
   }
 
-  async addMember(walletId, targetUserId, currentUserId, permission) {
-    const response = await api.post(`/api/wallets/${walletId}/members/${targetUserId}?currentUserId=${currentUserId}&permission=${permission}`);
+  async addMember(walletId, targetUserId, permission) {
+    const response = await api.post(`/api/wallets/${walletId}/members/${targetUserId}?permission=${permission}`);
     return response;
   }
 }
 
 export default new WalletService();
+

@@ -68,7 +68,7 @@ export default function Transactions() {
       }
       try {
         setLoading(true)
-        const res = await walletService.getWallets(ownerId)
+        const res = await walletService.getWallets()
         if (res.data?.success && res.data.data.length > 0) {
           setWallets(res.data.data)
           const firstWalletId = res.data.data[0].id
@@ -130,7 +130,18 @@ export default function Transactions() {
 
   const onSubmit = async (data) => {
     try {
-      await transactionService.createTransaction(data)
+      const payload = {
+        walletId: data.walletId,
+        categoryId: data.categoryId,
+        amount: data.amount,
+        type: data.type,
+        status: data.status,
+        title: data.description, // Mapeando description do form para title
+        description: data.notes || "",
+        transactionDate: new Date(`${data.date}T12:00:00`).toISOString(),
+      }
+
+      await transactionService.createTransaction(payload)
       toast.success("Transação criada com sucesso!")
       setIsDialogOpen(false)
       reset()
@@ -292,13 +303,13 @@ export default function Transactions() {
                       <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${tx.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600'}`}>
                         {tx.type === 'INCOME' ? <Coins className="h-4 w-4" /> : <Receipt className="h-4 w-4" />}
                       </div>
-                      {tx.description}
+                      {tx.title || tx.description}
                     </td>
                     <td className="px-4 py-4">
                       <CategoryBadge category={tx.categoryName || 'Geral'} color={tx.categoryColor} />
                     </td>
                     <td className="px-4 py-4 text-muted-foreground font-medium">
-                      {formatDate(tx.date)}
+                      {formatDate(tx.transactionDate)}
                     </td>
                     <td className={`px-6 py-4 text-right font-bold ${tx.type === 'INCOME' ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}`}>
                       {tx.type === 'INCOME' ? '+' : '-'} {formatCurrency(tx.amount)}

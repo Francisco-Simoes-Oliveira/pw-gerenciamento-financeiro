@@ -28,7 +28,7 @@ import com.financeiro.backend.security.services.UserDetailsImpl;
 
 @RestController
 @RequestMapping("/api/wallets")
-@CrossOrigin
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class WalletController {
 
     @Autowired

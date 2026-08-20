@@ -43,8 +43,10 @@ export default function Login() {
     setErrorMessage("")
     try {
       const response = await authService.login(data)
-      const { token, user } = response.data.data
+      const { token, id, name, email } = response.data.data
       
+      const user = { id, name, email }
+
       localStorage.setItem("app-token", token)
       localStorage.setItem("usuario", JSON.stringify(user))
 

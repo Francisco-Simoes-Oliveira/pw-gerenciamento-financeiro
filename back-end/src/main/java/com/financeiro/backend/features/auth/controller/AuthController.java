@@ -33,22 +33,27 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = jwtUtils.generateJwtToken(authentication);
+            
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateJwtToken(authentication);
-        
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            AuthResponse authResponse = new AuthResponse(
+                jwt,
+                userDetails.getId(),
+                userDetails.getName(),
+                userDetails.getEmail()
+            );
 
-        AuthResponse authResponse = new AuthResponse(
-            jwt,
-            userDetails.getId(),
-            userDetails.getName(),
-            userDetails.getEmail()
-        );
-
-        return ResponseEntity.ok(ApiResponse.success(authResponse));
+            return ResponseEntity.ok(ApiResponse.success(authResponse));
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            return ResponseEntity.status(401).body(ApiResponse.error("Email ou senha incorretos."));
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            return ResponseEntity.status(401).body(ApiResponse.error("Falha na autenticação."));
+        }
     }
 }

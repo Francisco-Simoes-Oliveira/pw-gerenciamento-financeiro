@@ -35,10 +35,15 @@ api.interceptors.response.use(
           toast.error(`Requisição inválida: ${message}`);
           break;
         case 401:
+          // Se o erro 401 vier do endpoint de login, não desloga, apenas repassa para o Login.jsx tratar.
+          if (error.config.url && error.config.url.includes('/api/auth/login')) {
+            break;
+          }
           toast.error('Sessão expirada. Por favor, faça login novamente.');
           localStorage.removeItem('app-token');
           localStorage.removeItem('usuario');
-          window.location.href = '/login';
+          // Dispara um evento customizado em vez de usar window.location.href para evitar hard reload
+          window.dispatchEvent(new Event('auth:unauthorized'));
           break;
         case 403:
           toast.error('Acesso negado.');
