@@ -86,7 +86,12 @@ export default function Register() {
       }
     } catch (err) {
       setLoading(false)
+      const status = err.response?.status
       const msg = err.response?.data?.message || err.response?.data || "Não foi possível conectar ao servidor."
+      if (status === 409 || /e-mail.*em uso|email.*em uso|já está em uso/i.test(String(msg))) {
+        setErrorMessage("Este e-mail já está cadastrado.")
+        return
+      }
       setErrorMessage(msg)
     }
   }

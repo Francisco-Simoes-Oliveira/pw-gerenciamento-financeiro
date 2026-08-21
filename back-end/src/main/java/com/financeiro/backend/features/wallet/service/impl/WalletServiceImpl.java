@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.financeiro.backend.common.exception.ResourceNotFoundException;
+import com.financeiro.backend.common.exception.ConflictException;
 import com.financeiro.backend.features.auth.entity.User;
 import com.financeiro.backend.features.auth.repository.UserRepository;
 import com.financeiro.backend.features.subscription.entity.UserSubscription;
@@ -16,6 +17,9 @@ import com.financeiro.backend.features.subscription.repository.UserSubscriptionR
 import com.financeiro.backend.features.transaction.repository.TransactionRepository;
 import com.financeiro.backend.features.wallet.dto.request.CreateWalletRequest;
 import com.financeiro.backend.features.wallet.dto.request.UpdateWalletRequest;
+import com.financeiro.backend.features.wallet.dto.request.AddWalletMemberRequest;
+import com.financeiro.backend.features.wallet.dto.request.UpdateWalletMemberRequest;
+import com.financeiro.backend.features.wallet.dto.response.WalletMemberResponse;
 import com.financeiro.backend.features.wallet.dto.response.WalletResponse;
 import com.financeiro.backend.features.wallet.entity.Wallet;
 import com.financeiro.backend.features.wallet.entity.WalletMember;
@@ -74,7 +78,8 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public List<WalletResponse> listByOwner(UUID ownerId) {
         return repository.findAll().stream()
-                .filter(w -> w.getOwner().getId().equals(ownerId))
+            .filter(w -> w.getOwner().getId().equals(ownerId)
+                || memberRepository.existsByWalletIdAndUserId(w.getId(), ownerId))
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
@@ -126,7 +131,7 @@ public class WalletServiceImpl implements WalletService {
         }
         
         if (memberRepository.existsByWalletIdAndUserId(walletId, targetUserId)) {
-            throw new IllegalArgumentException("O usuário já é membro desta carteira.");
+            throw new ConflictException("O usuário já é membro desta carteira.");
         }
         
         UserSubscription subscription = subscriptionRepository.findByUserId(currentUserId)
@@ -150,6 +155,50 @@ public class WalletServiceImpl implements WalletService {
                 .joinedAt(LocalDateTime.now())
                 .build();
                 
+        memberRepository.save(member);
+    }
+
+    @Override
+    public List<WalletMemberResponse> listMembers(UUID walletId, UUID currentUserId) {
+        Wallet wallet = repository.findById(walletId)
+                .orElseThrow(() -> new ResourceNotFoundException("Carteira não encontrada com ID: " + walletId));
+        checkViewPermission(wallet, currentUserId);
+
+        List<WalletMemberResponse> members = new java.util.ArrayList<>();
+        members.add(toMemberResponse(wallet.getOwner(), WalletPermission.OWNER));
+        members.addAll(memberRepository.findByWalletId(walletId).stream()
+                .map(member -> toMemberResponse(member.getUser(), member.getPermission()))
+                .collect(Collectors.toList()));
+        return members;
+    }
+
+    @Override
+    public void addMemberByEmail(UUID walletId, UUID currentUserId, AddWalletMemberRequest request) {
+        Wallet wallet = repository.findById(walletId)
+                .orElseThrow(() -> new ResourceNotFoundException("Carteira não encontrada com ID: " + walletId));
+        requireOwner(wallet, currentUserId);
+
+        User targetUser = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
+        if (wallet.getOwner().getId().equals(targetUser.getId())
+                || memberRepository.existsByWalletIdAndUserId(walletId, targetUser.getId())) {
+            throw new ConflictException("O usuário já é membro desta carteira.");
+        }
+        addMember(walletId, currentUserId, targetUser.getId(), request.getRole().name());
+    }
+
+    @Override
+    public void updateMember(UUID walletId, UUID currentUserId, UUID targetUserId, UpdateWalletMemberRequest request) {
+        Wallet wallet = repository.findById(walletId)
+                .orElseThrow(() -> new ResourceNotFoundException("Carteira não encontrada com ID: " + walletId));
+        requireOwner(wallet, currentUserId);
+        if (wallet.getOwner().getId().equals(targetUserId)) {
+            throw new IllegalArgumentException("O papel do OWNER não pode ser alterado.");
+        }
+
+        WalletMember member = memberRepository.findByWalletIdAndUserId(walletId, targetUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Membro não encontrado na carteira"));
+        member.setPermission(request.getRole());
         memberRepository.save(member);
     }
 
@@ -186,5 +235,20 @@ public class WalletServiceImpl implements WalletService {
         if (member.getPermission() != WalletPermission.EDITOR) {
             throw new SecurityException("Usuário não tem permissão de EDITOR para editar esta carteira.");
         }
+    }
+
+    private void requireOwner(Wallet wallet, UUID currentUserId) {
+        if (!wallet.getOwner().getId().equals(currentUserId)) {
+            throw new SecurityException("Apenas o OWNER pode gerenciar membros.");
+        }
+    }
+
+    private WalletMemberResponse toMemberResponse(User user, WalletPermission permission) {
+        return WalletMemberResponse.builder()
+                .userId(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(permission)
+                .build();
     }
 }

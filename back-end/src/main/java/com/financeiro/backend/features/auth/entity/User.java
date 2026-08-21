@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -39,6 +40,7 @@ public class User {
 
     @Email(message = "{email.invalido}")
     @NotBlank(message = "{email.obrigatorio}")
+    @Column(nullable = false, unique = true)
     private String email;
 
     @NotBlank(message = "{password.obrigatorio}")

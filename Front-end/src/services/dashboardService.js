@@ -20,6 +20,14 @@ class DashboardService {
     return response;
   }
 
+  async getMonthly(walletId = null) {
+    return api.get('/api/reports/monthly', { params: walletId ? { walletId } : {} });
+  }
+
+  async getExpensesByCategory(walletId = null) {
+    return api.get('/api/reports/categories', { params: walletId ? { walletId } : {} });
+  }
+
   /**
    * Obtém indicadores financeiros (Ticket Médio, Maior Despesa).
    */

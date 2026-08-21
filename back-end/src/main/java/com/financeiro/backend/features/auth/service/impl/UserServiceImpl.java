@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.financeiro.backend.common.exception.ResourceNotFoundException;
+import com.financeiro.backend.common.exception.ConflictException;
 import com.financeiro.backend.features.auth.dto.request.CreateUserRequest;
 import com.financeiro.backend.features.auth.dto.request.UpdateUserRequest;
 import com.financeiro.backend.features.auth.dto.response.UserResponse;
@@ -32,7 +33,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse insert(CreateUserRequest request) {
         if (repository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("O e-mail informado já está em uso.");
+            throw new ConflictException("O e-mail informado já está em uso.");
         }
 
         User user = mapper.toEntity(request);
@@ -75,7 +76,7 @@ public class UserServiceImpl implements UserService {
 
         if (request.getEmail() != null && !request.getEmail().equals(userDB.getEmail())) {
             if (repository.existsByEmail(request.getEmail())) {
-                throw new IllegalArgumentException("O e-mail informado já está em uso.");
+                throw new ConflictException("O e-mail informado já está em uso.");
             }
         }
 

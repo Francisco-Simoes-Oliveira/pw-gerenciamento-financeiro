@@ -18,6 +18,9 @@ import { Tooltip } from "@/components/ui/tooltip"
 export default function AppSidebar({ collapsed, setCollapsed }) {
   const location = useLocation()
   const navigate = useNavigate()
+  const user = JSON.parse(localStorage.getItem("usuario") || "{}")
+  const userName = user.name || "Usuário"
+  const userInitial = userName.charAt(0).toUpperCase()
 
   const menuItems = [
     { name: "Dashboard", path: "/dashboard", icon: Home },
@@ -133,14 +136,12 @@ export default function AppSidebar({ collapsed, setCollapsed }) {
 
             {/* Profile trigger */}
             <div className="flex items-center gap-3">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80"
-                alt="User Profile"
-                className="h-9 w-9 shrink-0 rounded-full border border-border object-cover shadow-sm"
-              />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-primary/10 text-sm font-semibold text-primary shadow-sm" aria-label={userName}>
+                {userInitial}
+              </div>
               <div className="flex flex-col overflow-hidden">
                 <span className="truncate text-xs font-semibold text-foreground">
-                  Carlos Eduardo
+                  {userName}
                 </span>
                 <span className="truncate text-[10px] text-muted-foreground">
                   Premium Member
@@ -155,13 +156,13 @@ export default function AppSidebar({ collapsed, setCollapsed }) {
                 L{levelData.level}
               </div>
             </Tooltip>
-            <Tooltip content="Carlos Eduardo (Premium)">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80"
-                alt="User Profile"
-                className="h-8 w-8 rounded-full border border-border object-cover shadow-sm cursor-pointer"
+            <Tooltip content={userName}>
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-primary/10 text-xs font-semibold text-primary shadow-sm cursor-pointer"
                 onClick={() => handleNavigation("/profile")}
-              />
+              >
+                {userInitial}
+              </div>
             </Tooltip>
           </div>
         )}

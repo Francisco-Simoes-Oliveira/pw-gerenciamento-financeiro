@@ -54,7 +54,7 @@ export default function Login() {
       navigate(AppRoutes.Dashboard)
     } catch (err) {
       setLoading(false)
-      setErrorMessage("E-mail corporativo ou senha incorretos.")
+      setErrorMessage(err.response?.data?.message || "E-mail corporativo ou senha incorretos.")
     }
   }
 
@@ -62,7 +62,7 @@ export default function Login() {
     <div className="flex min-h-screen w-screen bg-background text-foreground antialiased overflow-hidden font-sans">
       
       {/* Left split pane: Isometric graphics (Visible on lg and above) */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-gradient-to-br from-blue-900 via-blue-950 to-slate-950 p-12 text-white relative">
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-linear-to-br from-blue-900 via-blue-950 to-slate-950 p-12 text-white relative">
         {/* Glow ambient decoration */}
         <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-blue-500/10 blur-[100px]" />
         
@@ -80,7 +80,7 @@ export default function Login() {
         {/* Isometric SVG Microchip Layout */}
         <div className="flex flex-1 items-center justify-center z-10 py-12">
           <svg
-            className="w-full max-w-[340px] drop-shadow-2xl animate-pulse duration-[3000ms]"
+            className="w-full max-w-85 drop-shadow-2xl animate-pulse duration-3000"
             viewBox="0 0 400 400"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -136,7 +136,7 @@ export default function Login() {
 
       {/* Right split pane: Form card */}
       <div className="flex flex-1 flex-col justify-between bg-slate-50/20 px-6 py-12 dark:bg-slate-950/20 sm:px-12 lg:w-1/2">
-        <div className="mx-auto flex w-full max-w-[400px] flex-col justify-center space-y-6 self-center my-auto">
+        <div className="mx-auto flex w-full max-w-100 flex-col justify-center space-y-6 self-center my-auto">
           
           {/* Header section */}
           <div className="flex flex-col space-y-2 text-center sm:text-left">

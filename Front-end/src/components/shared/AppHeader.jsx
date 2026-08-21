@@ -13,6 +13,10 @@ import { Badge } from "@/components/ui/badge"
 
 export default function AppHeader({ isMobile, onMenuToggle }) {
   const navigate = useNavigate()
+  const user = JSON.parse(localStorage.getItem("usuario") || "{}")
+  const userName = user.name || "Usuário"
+  const userEmail = user.email || ""
+  const userInitial = userName.charAt(0).toUpperCase()
 
   return (
     <header className="flex h-16 w-full items-center justify-between border-b border-border bg-card/85 backdrop-blur-sm px-4 md:px-6 z-30">
@@ -73,18 +77,16 @@ export default function AppHeader({ isMobile, onMenuToggle }) {
         <DropdownMenu>
           <DropdownMenuTrigger>
             <div className="flex items-center gap-2 cursor-pointer outline-none">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80"
-                alt="User Profile"
-                className="h-8 w-8 rounded-full border border-border object-cover shadow-sm transition-transform hover:scale-105"
-              />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-primary/10 text-xs font-semibold text-primary shadow-sm transition-transform hover:scale-105" aria-label={userName}>
+                {userInitial}
+              </div>
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="right" className="w-52">
             <DropdownMenuLabel>
               <div className="flex flex-col">
-                <span className="font-semibold text-foreground text-xs">Carlos Eduardo</span>
-                <span className="text-[10px] text-muted-foreground font-medium">carlos@finshare.com</span>
+                <span className="font-semibold text-foreground text-xs">{userName}</span>
+                {userEmail && <span className="text-[10px] text-muted-foreground font-medium">{userEmail}</span>}
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

@@ -5,6 +5,9 @@ import java.util.UUID;
 
 import com.financeiro.backend.features.wallet.dto.request.CreateWalletRequest;
 import com.financeiro.backend.features.wallet.dto.request.UpdateWalletRequest;
+import com.financeiro.backend.features.wallet.dto.request.AddWalletMemberRequest;
+import com.financeiro.backend.features.wallet.dto.request.UpdateWalletMemberRequest;
+import com.financeiro.backend.features.wallet.dto.response.WalletMemberResponse;
 import com.financeiro.backend.features.wallet.dto.response.WalletResponse;
 
 public interface WalletService {
@@ -15,5 +18,8 @@ public interface WalletService {
     void remove(UUID id, UUID currentUserId);
     
     void addMember(UUID walletId, UUID currentUserId, UUID targetUserId, String permission);
+    List<WalletMemberResponse> listMembers(UUID walletId, UUID currentUserId);
+    void addMemberByEmail(UUID walletId, UUID currentUserId, AddWalletMemberRequest request);
+    void updateMember(UUID walletId, UUID currentUserId, UUID targetUserId, UpdateWalletMemberRequest request);
     void removeMember(UUID walletId, UUID currentUserId, UUID targetUserId);
 }

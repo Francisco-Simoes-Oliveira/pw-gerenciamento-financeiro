@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Plus, Receipt, Loader2, Coins } from "lucide-react"
 
 import PageHeader from "@/components/shared/PageHeader"
 import CategoryBadge from "@/components/shared/CategoryBadge"
+import CurrencyInput from "@/components/shared/CurrencyInput"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -19,11 +20,15 @@ const transactionSchema = z.object({
   walletId: z.string().uuid("Selecione uma carteira"),
   categoryId: z.string().uuid("Selecione uma categoria"),
   amount: z.coerce.number().min(0.01, "O valor deve ser maior que zero"),
-  type: z.enum(["INCOME", "EXPENSE"]),
+  type: z.enum(["INCOME", "EXPENSE", "TRANSFER"]),
+  destinationWalletId: z.string().optional(),
   date: z.string().min(10, "Data inválida"),
   description: z.string().min(2, "A descrição deve conter pelo menos 2 caracteres."),
-  status: z.enum(["PENDING", "COMPLETED", "CANCELED"]),
-  notes: z.string().optional(),
+  status: z.enum(["PENDING", "PAID", "CANCELED"]),
+}).superRefine((data, context) => {
+  if (data.type === "TRANSFER" && (!data.destinationWalletId || !z.string().uuid().safeParse(data.destinationWalletId).success)) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["destinationWalletId"], message: "Selecione a carteira de destino" })
+  }
 })
 
 export default function Transactions() {
@@ -41,6 +46,7 @@ export default function Transactions() {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting },
     setValue,
     watch
@@ -51,10 +57,10 @@ export default function Transactions() {
       categoryId: "",
       amount: 0,
       type: "EXPENSE",
+      destinationWalletId: "",
       date: new Date().toISOString().split('T')[0],
       description: "",
-      status: "COMPLETED",
-      notes: "",
+      status: "PENDING",
     },
   })
 
@@ -69,7 +75,7 @@ export default function Transactions() {
       try {
         setLoading(true)
         const res = await walletService.getWallets()
-        if (res.data?.success && res.data.data.length > 0) {
+        if (res.data?.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
           setWallets(res.data.data)
           const firstWalletId = res.data.data[0].id
           setSelectedWalletId(firstWalletId)
@@ -102,9 +108,9 @@ export default function Transactions() {
   const loadTransactions = async (walletId) => {
     try {
       setLoading(true)
-      const res = await transactionService.listTransactions({ walletId, page: 0, size: 50 })
+      const res = await transactionService.listTransactions({ walletId })
       if (res.data?.success) {
-        setTransactions(res.data.data.content || [])
+        setTransactions(Array.isArray(res.data.data) ? res.data.data : [])
       }
     } catch (error) {
       console.error(error)
@@ -136,8 +142,9 @@ export default function Transactions() {
         amount: data.amount,
         type: data.type,
         status: data.status,
+        ...(data.type === "TRANSFER" ? { destinationWalletId: data.destinationWalletId } : {}),
         title: data.description, // Mapeando description do form para title
-        description: data.notes || "",
+        description: data.description,
         transactionDate: new Date(`${data.date}T12:00:00`).toISOString(),
       }
 
@@ -147,6 +154,7 @@ export default function Transactions() {
       reset()
       setValue("walletId", selectedWalletId)
       setValue("type", "EXPENSE")
+      setValue("status", "PENDING")
       setValue("date", new Date().toISOString().split('T')[0])
       loadTransactions(selectedWalletId)
     } catch (error) {
@@ -178,7 +186,7 @@ export default function Transactions() {
           <Label htmlFor="wallet-select" className="text-sm font-medium">Carteira:</Label>
           <select 
             id="wallet-select"
-            className="flex h-10 w-full md:w-[200px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-10 w-full md:w-50 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             value={selectedWalletId}
             onChange={handleWalletChange}
             disabled={loading || wallets.length === 0}
@@ -197,7 +205,7 @@ export default function Transactions() {
               Nova Transação
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-106.25">
             <form onSubmit={handleSubmit(onSubmit)}>
               <DialogHeader>
                 <DialogTitle>Adicionar Transação</DialogTitle>
@@ -218,20 +226,57 @@ export default function Transactions() {
                     >
                       <option value="EXPENSE">Despesa</option>
                       <option value="INCOME">Receita</option>
+                      <option value="TRANSFER">Transferência</option>
                     </select>
                     {errors.type && <p className="text-xs text-destructive">{errors.type.message}</p>}
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="amount">Valor</Label>
-                    <Input id="amount" type="number" step="0.01" min="0" placeholder="0.00" {...register("amount")} disabled={isSubmitting} />
+                    <Controller
+                      name="amount"
+                      control={control}
+                      render={({ field }) => (
+                        <CurrencyInput
+                          id="amount"
+                          placeholder="R$ 0,00"
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={isSubmitting}
+                        />
+                      )}
+                    />
                     {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
                   </div>
                 </div>
+
+                {currentType === "TRANSFER" && <div className="space-y-1.5">
+                  <Label htmlFor="destinationWalletId">Carteira de destino</Label>
+                  <select id="destinationWalletId" {...register("destinationWalletId")} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" disabled={isSubmitting}>
+                    <option value="" disabled>Selecione a carteira</option>
+                    {wallets.filter((wallet) => wallet.id !== selectedWalletId).map((wallet) => <option key={wallet.id} value={wallet.id}>{wallet.name}</option>)}
+                  </select>
+                  {errors.destinationWalletId && <p className="text-xs text-destructive">{errors.destinationWalletId.message}</p>}
+                </div>}
 
                 <div className="space-y-1.5">
                   <Label htmlFor="description">Descrição</Label>
                   <Input id="description" placeholder="Ex: Supermercado" {...register("description")} disabled={isSubmitting} />
                   {errors.description && <p className="text-xs text-destructive">{errors.description.message}</p>}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="status">Status</Label>
+                  <select
+                    id="status"
+                    {...register("status")}
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={isSubmitting}
+                  >
+                    <option value="PENDING">Pendente</option>
+                    <option value="PAID">Pago</option>
+                    <option value="CANCELED">Cancelado</option>
+                  </select>
+                  {errors.status && <p className="text-xs text-destructive">{errors.status.message}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -270,16 +315,16 @@ export default function Transactions() {
       </div>
 
       {loading ? (
-        <div className="flex h-[200px] items-center justify-center rounded-xl border border-dashed border-border bg-card">
+        <div className="flex h-50 items-center justify-center rounded-xl border border-dashed border-border bg-card">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : wallets.length === 0 ? (
-        <div className="flex flex-col gap-2 h-[200px] items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-center text-muted-foreground">
+        <div className="flex flex-col gap-2 h-50 items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-center text-muted-foreground">
           <Receipt className="h-10 w-10 text-muted-foreground/50 mb-2" />
           <p>Você precisa criar uma carteira primeiro.</p>
         </div>
       ) : transactions.length === 0 ? (
-        <div className="flex flex-col gap-2 h-[200px] items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-center text-muted-foreground">
+        <div className="flex flex-col gap-2 h-50 items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-center text-muted-foreground">
           <Receipt className="h-10 w-10 text-muted-foreground/50 mb-2" />
           <p>Nenhuma transação encontrada para esta carteira.</p>
           <p className="text-xs">Crie sua primeira transação clicando em "Nova Transação".</p>

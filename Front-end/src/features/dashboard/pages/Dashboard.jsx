@@ -18,7 +18,7 @@ import CategoryBadge from "@/components/shared/CategoryBadge"
 import LevelCard from "@/components/shared/LevelCard"
 
 import dashboardService from "@/services/dashboardService"
-import { fetchDashboardChartMock, fetchCategoryDistributionMock, fetchSharedWalletsMock } from "@/mocks/dashboardMock"
+import walletService from "@/services/walletService"
 import { toast } from "sonner"
 
 export default function Dashboard() {
@@ -46,20 +46,33 @@ export default function Dashboard() {
           setSummary(summaryRes.data.data)
         }
 
+        const monthlyRes = await dashboardService.getMonthly()
+        if (monthlyRes.data?.success) {
+          setChartData((monthlyRes.data.data || []).map((item) => ({
+            name: item.month,
+            Receitas: Number(item.income || 0),
+            Despesas: Number(item.expense || 0),
+          })))
+        }
+
+        const categoryRes = await dashboardService.getExpensesByCategory()
+        if (categoryRes.data?.success) {
+          setCategoryData((categoryRes.data.data || []).map((item, index) => ({
+            name: item.category,
+            value: item.percentage || 0,
+            color: ["#1E3A8A", "#B91C1C", "#059669", "#D97706"][index % 4],
+          })))
+        }
+
         const statementRes = await dashboardService.getStatement({ page: 0, size: 5 })
         if (statementRes.data?.success) {
           setTransactions(statementRes.data.data.content || [])
         }
 
-        // Fetch mock data
-        const chartMock = await fetchDashboardChartMock()
-        setChartData(chartMock)
-
-        const categoryMock = await fetchCategoryDistributionMock()
-        setCategoryData(categoryMock)
-
-        const walletsMock = await fetchSharedWalletsMock()
-        setSharedWallets(walletsMock)
+        const walletsRes = await walletService.getWallets()
+        if (walletsRes.data?.success) {
+          setSharedWallets(walletsRes.data.data || [])
+        }
 
       } catch (error) {
         console.error("Dashboard error:", error)
@@ -140,11 +153,11 @@ export default function Dashboard() {
         {/* Income vs Expenses double bar chart */}
         <FinancialCard
           title="Receitas vs Despesas"
-          subtitle="Desempenho financeiro nos últimos 6 meses (Mocked)"
+          subtitle="Dados reais disponíveis no relatório"
           className="lg:col-span-2"
         >
-          <div className="h-[280px] w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-70 w-full mt-4">
+            {chartData.length === 0 ? <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Ainda não existem dados mensais suficientes.</div> : <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                 <XAxis dataKey="name" stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} />
@@ -167,7 +180,7 @@ export default function Dashboard() {
                 <Bar dataKey="Receitas" fill="#1E3A8A" radius={[4, 4, 0, 0]} maxBarSize={30} />
                 <Bar dataKey="Despesas" fill="#B91C1C" radius={[4, 4, 0, 0]} maxBarSize={30} />
               </BarChart>
-            </ResponsiveContainer>
+            </ResponsiveContainer>}
           </div>
         </FinancialCard>
 
@@ -179,7 +192,7 @@ export default function Dashboard() {
           {/* Shared Wallets Card */}
           <FinancialCard
             title="Shared Wallets"
-            subtitle="Carteiras ativas com divisão de saldo (Mocked)"
+            subtitle="Carteiras retornadas pela API"
             actions={
               <button className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 cursor-pointer transition-colors">
                 <Plus className="h-4 w-4" />
@@ -187,13 +200,13 @@ export default function Dashboard() {
             }
           >
             <div className="flex flex-col gap-3 mt-3">
-              {sharedWallets.map((wallet, index) => (
+              {sharedWallets.length === 0 ? <p className="text-sm text-muted-foreground">Você ainda não possui carteiras.</p> : sharedWallets.map((wallet) => (
                 <WalletCard
-                  key={index}
+                  key={wallet.id}
                   name={wallet.name}
-                  type={wallet.type}
-                  balance={wallet.balance}
-                  members={wallet.members}
+                  type={wallet.ownerId === user?.id ? "Pessoal" : "Compartilhada"}
+                  balance={formatCurrency(wallet.balance || 0)}
+                  members={[]}
                 />
               ))}
             </div>
@@ -258,10 +271,10 @@ export default function Dashboard() {
         {/* Category Breakdown doughnut chart */}
         <FinancialCard
           title="Gastos por Categoria"
-          subtitle="Distribuição percentual mensal de despesas (Mocked)"
+          subtitle="Distribuição calculada a partir do extrato real"
         >
-          <div className="h-[210px] w-full flex items-center justify-center mt-3 relative">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-52.5 w-full flex items-center justify-center mt-3 relative">
+            {categoryData.length === 0 ? <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Ainda não existem movimentações.</div> : <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={categoryData}
@@ -289,11 +302,11 @@ export default function Dashboard() {
                   }}
                 />
               </PieChart>
-            </ResponsiveContainer>
+            </ResponsiveContainer>}
             {/* Value in center of Doughnut */}
             <div className="absolute flex flex-col items-center justify-center">
               <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Total</span>
-              <span className="text-xl font-extrabold text-foreground">100%</span>
+              <span className="text-xl font-extrabold text-foreground">{categoryData.length ? "100%" : "-"}</span>
             </div>
           </div>
 

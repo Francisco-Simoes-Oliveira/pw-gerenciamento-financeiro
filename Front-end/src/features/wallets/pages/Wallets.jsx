@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -22,6 +23,7 @@ const walletSchema = z.object({
 })
 
 export default function Wallets() {
+  const navigate = useNavigate()
   const [wallets, setWallets] = useState([])
   const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -162,13 +164,19 @@ export default function Wallets() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {wallets.map((w) => (
-            <WalletCard
+            <button
               key={w.id}
-              name={w.name}
-              type={w.currency}
-              balance={formatCurrency(w.balance || 0)}
-              members={[]}
-            />
+              type="button"
+              className="text-left"
+              onClick={() => navigate(`/wallets/${w.id}`)}
+            >
+              <WalletCard
+                name={w.name}
+                type={w.ownerId === ownerId ? "Pessoal" : "Compartilhada"}
+                balance={formatCurrency(w.balance || 0)}
+                members={[]}
+              />
+            </button>
           ))}
         </div>
       )}

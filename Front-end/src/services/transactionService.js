@@ -25,11 +25,6 @@ class TransactionService {
     const response = await api.delete(`/api/transactions/${id}`);
     return response;
   }
-
-  async updateStatus(id, data) {
-    const response = await api.put(`/api/transactions/${id}/status`, data);
-    return response;
-  }
 }
 
 export default new TransactionService();

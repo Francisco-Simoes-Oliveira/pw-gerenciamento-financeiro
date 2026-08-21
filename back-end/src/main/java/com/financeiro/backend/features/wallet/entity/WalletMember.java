@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 import com.financeiro.backend.features.auth.entity.User;
 import com.financeiro.backend.features.wallet.enums.WalletPermission;
@@ -22,7 +23,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "wallet_member")
+@Table(name = "wallet_member", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"wallet_id", "user_id"})
+})
 @Data
 @Builder
 @NoArgsConstructor

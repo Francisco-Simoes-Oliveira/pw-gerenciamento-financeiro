@@ -17,7 +17,7 @@ const categorySchema = z.object({
   name: z.string().min(2, "O nome deve conter pelo menos 2 caracteres."),
   color: z.string().min(4, "Cor inválida").max(7),
   icon: z.string().optional(),
-  type: z.enum(["INCOME", "EXPENSE"]),
+  type: z.enum(["INCOME", "EXPENSE", "TRANSFER"]),
   walletId: z.string().uuid("Selecione uma carteira"),
 })
 
@@ -128,7 +128,7 @@ export default function Categories() {
           <Label htmlFor="wallet-select" className="text-sm font-medium">Carteira:</Label>
           <select 
             id="wallet-select"
-            className="flex h-10 w-full md:w-[200px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-10 w-full md:w-50 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             value={selectedWalletId}
             onChange={handleWalletChange}
             disabled={loading || wallets.length === 0}
@@ -147,7 +147,7 @@ export default function Categories() {
               Nova Categoria
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-106.25">
             <form onSubmit={handleSubmit(onSubmit)}>
               <DialogHeader>
                 <DialogTitle>Adicionar Categoria</DialogTitle>
@@ -174,6 +174,7 @@ export default function Categories() {
                     >
                       <option value="EXPENSE">Despesa</option>
                       <option value="INCOME">Receita</option>
+                      <option value="TRANSFER">Transferência</option>
                     </select>
                     {errors.type && <p className="text-xs text-destructive">{errors.type.message}</p>}
                   </div>
@@ -201,16 +202,16 @@ export default function Categories() {
       </div>
 
       {loading ? (
-        <div className="flex h-[200px] items-center justify-center rounded-xl border border-dashed border-border bg-card">
+        <div className="flex h-50 items-center justify-center rounded-xl border border-dashed border-border bg-card">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : wallets.length === 0 ? (
-        <div className="flex flex-col gap-2 h-[200px] items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-center text-muted-foreground">
+        <div className="flex flex-col gap-2 h-50 items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-center text-muted-foreground">
           <Tags className="h-10 w-10 text-muted-foreground/50 mb-2" />
           <p>Você precisa criar uma carteira primeiro.</p>
         </div>
       ) : categories.length === 0 ? (
-        <div className="flex flex-col gap-2 h-[200px] items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-center text-muted-foreground">
+        <div className="flex flex-col gap-2 h-50 items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-center text-muted-foreground">
           <Tags className="h-10 w-10 text-muted-foreground/50 mb-2" />
           <p>Nenhuma categoria encontrada para esta carteira.</p>
           <p className="text-xs">Crie sua primeira categoria clicando em "Nova Categoria".</p>

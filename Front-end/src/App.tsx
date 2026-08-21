@@ -8,6 +8,7 @@ import VerifyCode from "./features/auth/pages/verifyCode/VerifyCode"
 import DashboardLayout from "./components/layouts/DashboardLayout"
 import Dashboard from "./features/dashboard/pages/Dashboard"
 import Wallets from "./features/wallets/pages/Wallets"
+import WalletDetails from "./features/wallets/pages/WalletDetails"
 import Transactions from "./features/transactions/pages/Transactions"
 import Categories from "./features/categories/pages/Categories"
 import Goals from "./features/goals/pages/Goals"
@@ -51,6 +52,7 @@ export function App() {
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/wallets" element={<Wallets />} />
+              <Route path="/wallets/:id" element={<WalletDetails />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/goals" element={<Goals />} />
