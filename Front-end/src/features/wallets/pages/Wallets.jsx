@@ -131,10 +131,7 @@ export default function Wallets() {
                   
                   <div className="space-y-1.5">
                     <Label htmlFor="color">Cor</Label>
-                    <div className="flex gap-2 items-center">
-                      <Input type="color" className="w-12 p-1 h-9" id="color" {...register("color")} disabled={isSubmitting} />
-                      <Input type="text" className="flex-1" placeholder="#3B82F6" {...register("color")} disabled={isSubmitting} />
-                    </div>
+                    <Input type="color" className="h-9 w-full p-1" id="color" {...register("color")} disabled={isSubmitting} />
                     {errors.color && <p className="text-xs text-destructive">{errors.color.message}</p>}
                   </div>
                 </div>

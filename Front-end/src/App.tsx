@@ -46,6 +46,7 @@ export function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-code" element={<VerifyCode />} />
+          <Route path="/redefinir-senha/:token" element={<VerifyCode />} />
 
           {/* Protected Dashboard Layout Routes */}
           <Route element={<ProtectedRoute />}>

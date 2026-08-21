@@ -41,10 +41,8 @@ export default function ForgotPassword() {
       await authService.requestPasswordReset(data.email)
       
       setLoading(false)
-      setSuccessMessage("Código de redefinição enviado com sucesso! Verifique sua caixa de entrada.")
-      setTimeout(() => {
-        navigate(AppRoutes.VerifyCode)
-      }, 1500)
+      setSuccessMessage("Solicitação enviada. Use o token completo recebido para redefinir sua senha.")
+      navigate(`${AppRoutes.VerifyCode}`)
     } catch (err) {
       setLoading(false)
       const msg = err.response?.data?.message || err.response?.data || "Ocorreu um erro ao processar o seu pedido. Tente novamente."
@@ -135,7 +133,7 @@ export default function ForgotPassword() {
               className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline cursor-pointer"
             >
               <ArrowLeft className="h-4 w-4" />
-              Voltar para Fazer login
+              Voltar para o login
             </span>
           </div>
         </div>

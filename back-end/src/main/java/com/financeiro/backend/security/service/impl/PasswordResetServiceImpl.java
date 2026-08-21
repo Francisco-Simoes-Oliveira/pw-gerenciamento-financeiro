@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.financeiro.backend.common.exception.ResourceNotFoundException;
 import com.financeiro.backend.features.auth.entity.User;
@@ -23,6 +24,9 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public void requestPasswordReset(PasswordResetRequest request) {
@@ -58,8 +62,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         }
 
         User user = resetToken.getUser();
-        // Em um sistema real, a senha deveria ser criptografada (ex: BCrypt)
-        user.setPassword(request.getNewPassword());
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
         resetToken.setUsed(true);

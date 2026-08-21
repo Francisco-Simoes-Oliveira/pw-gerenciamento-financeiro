@@ -191,7 +191,7 @@ export default function Dashboard() {
 
           {/* Shared Wallets Card */}
           <FinancialCard
-            title="Shared Wallets"
+            title="Carteiras Compartilhadas"
             subtitle="Carteiras retornadas pela API"
             actions={
               <button className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 cursor-pointer transition-colors">

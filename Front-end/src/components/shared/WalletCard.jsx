@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 
 export default function WalletCard({
   name,
-  type = "standard", // "ativo" | "standard" | "personal"
+  type = "Pessoal",
   balance,
   members = [], // Array of avatar image URLs
   className,
@@ -34,7 +34,7 @@ export default function WalletCard({
                   key={idx}
                   className="inline-block h-6.5 w-6.5 rounded-full ring-2 ring-card object-cover"
                   src={url}
-                  alt={`Member ${idx + 1}`}
+                  alt={`Membro ${idx + 1}`}
                 />
               ))}
               {members.length > 3 && (

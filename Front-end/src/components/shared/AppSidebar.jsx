@@ -24,13 +24,13 @@ export default function AppSidebar({ collapsed, setCollapsed }) {
 
   const menuItems = [
     { name: "Dashboard", path: "/dashboard", icon: Home },
-    { name: "Wallets", path: "/wallets", icon: Wallet },
-    { name: "Transactions", path: "/transactions", icon: ArrowUpDown },
-    { name: "Categories", path: "/categories", icon: Tag },
-    { name: "Goals", path: "/goals", icon: Target },
-    { name: "Achievements", path: "/achievements", icon: Trophy },
-    { name: "Settings", path: "/settings", icon: Settings },
-    { name: "Profile", path: "/profile", icon: User },
+    { name: "Carteiras", path: "/wallets", icon: Wallet },
+    { name: "Transações", path: "/transactions", icon: ArrowUpDown },
+    { name: "Categorias", path: "/categories", icon: Tag },
+    { name: "Metas", path: "/goals", icon: Target },
+    { name: "Conquistas", path: "/achievements", icon: Trophy },
+    { name: "Configurações", path: "/settings", icon: Settings },
+    { name: "Perfil", path: "/profile", icon: User },
   ]
 
   // Mocked level data for design integration
@@ -49,7 +49,7 @@ export default function AppSidebar({ collapsed, setCollapsed }) {
     <aside
       className={cn(
         "relative flex h-full flex-col border-r border-border bg-card text-card-foreground transition-all duration-300 ease-in-out select-none z-40",
-        collapsed ? "w-[72px]" : "w-[260px]"
+        collapsed ? "w-18" : "w-65"
       )}
     >
       {/* Brand logo section */}
@@ -64,7 +64,7 @@ export default function AppSidebar({ collapsed, setCollapsed }) {
                 FinShare
               </span>
               <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground">
-                Institutional Grade
+                Categoria Institucional
               </span>
             </div>
           )}
@@ -144,7 +144,7 @@ export default function AppSidebar({ collapsed, setCollapsed }) {
                   {userName}
                 </span>
                 <span className="truncate text-[10px] text-muted-foreground">
-                  Premium Member
+                  Membro Premium
                 </span>
               </div>
             </div>

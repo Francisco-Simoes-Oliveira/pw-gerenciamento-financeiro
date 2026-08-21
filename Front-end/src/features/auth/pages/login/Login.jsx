@@ -73,7 +73,7 @@ export default function Login() {
           </div>
           <div className="flex flex-col">
             <span className="text-base font-bold tracking-tight text-white">FinShare</span>
-            <span className="text-[10px] uppercase font-semibold tracking-wider text-blue-400">Institutional Grade</span>
+            <span className="text-[10px] uppercase font-semibold tracking-wider text-blue-400">Categoria Institucional</span>
           </div>
         </div>
 
@@ -126,10 +126,10 @@ export default function Login() {
         {/* Content footer copy */}
         <div className="space-y-3 z-10 max-w-md">
           <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            Shared financial control, redefined.
+            Controle financeiro compartilhado, redefinido.
           </h2>
           <p className="text-sm text-blue-200/85 leading-relaxed">
-            Unified intelligence for teams and partners. Manage wallets, track flows, and gain insights with institutional precision.
+            Inteligência unificada para equipes e parceiros. Gerencie carteiras, acompanhe movimentações e obtenha insights com precisão institucional.
           </p>
         </div>
       </div>
@@ -151,7 +151,7 @@ export default function Login() {
               Bem-vindo de volta
             </h1>
             <p className="text-sm text-muted-foreground leading-snug">
-              Acesse sua conta institucional para gerenciar seus ativos.
+              Acesse sua conta institucional para gerenciar suas finanças.
             </p>
           </div>
 
@@ -260,7 +260,7 @@ export default function Login() {
           </span>
           <span>|</span>
           <span className="flex items-center gap-1">
-            AES-256 Encrypted
+            Criptografia AES-256
           </span>
         </div>
       </div>

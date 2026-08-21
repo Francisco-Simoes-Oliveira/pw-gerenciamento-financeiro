@@ -37,7 +37,7 @@ export default function AppHeader({ isMobile, onMenuToggle }) {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search institutional data..."
+            placeholder="Pesquisar dados institucionais..."
             className="pl-9 h-9 w-full bg-slate-50/50 dark:bg-slate-950/20 border-border focus-visible:bg-background transition-all"
           />
         </div>

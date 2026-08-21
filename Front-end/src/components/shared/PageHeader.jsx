@@ -15,7 +15,7 @@ export default function PageHeader({
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav className="flex items-center gap-1.5 text-xs text-muted-foreground select-none font-medium">
           <Link to="/dashboard" className="hover:text-foreground transition-colors">
-            Home
+            Início
           </Link>
           {breadcrumbs.map((crumb, idx) => (
             <div key={idx} className="flex items-center gap-1.5">

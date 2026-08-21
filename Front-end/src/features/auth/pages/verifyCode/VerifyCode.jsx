@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -14,7 +14,7 @@ import * as AppRoutes from "@/routes/AppRoutes"
 
 const verifySchema = z
   .object({
-    code: z.string().min(6, "O código de verificação deve conter 6 caracteres."),
+    token: z.string().min(1, "O token de redefinição é obrigatório."),
     password: z.string().min(8, "A senha deve conter pelo menos 8 caracteres."),
     confirmPassword: z.string(),
   })
@@ -25,6 +25,7 @@ const verifySchema = z
 
 export default function VerifyCode() {
   const navigate = useNavigate()
+  const { token: routeToken } = useParams()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -38,7 +39,7 @@ export default function VerifyCode() {
   } = useForm({
     resolver: zodResolver(verifySchema),
     defaultValues: {
-      code: "",
+      token: routeToken || "",
       password: "",
       confirmPassword: "",
     },
@@ -49,7 +50,7 @@ export default function VerifyCode() {
     setErrorMessage("")
     setSuccessMessage("")
     try {
-      await authService.confirmPasswordReset(data.code, data.password)
+      await authService.confirmPasswordReset(data.token, data.password)
       
       setLoading(false)
       setSuccessMessage("Senha redefinida com sucesso! Você está sendo redirecionado...")
@@ -74,7 +75,7 @@ export default function VerifyCode() {
         <span className="text-base font-bold tracking-tight text-foreground">FinShare</span>
       </div>
 
-      <div className="w-full max-w-[440px] space-y-6">
+      <div className="w-full max-w-110 space-y-6">
         
         {/* Card container */}
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm transition-all hover:shadow-md">
@@ -82,10 +83,10 @@ export default function VerifyCode() {
           {/* Header titles */}
           <div className="flex flex-col space-y-2 text-center pb-4">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Definir Nova Senha
+              Redefinir Senha
             </h1>
             <p className="text-xs text-muted-foreground leading-relaxed px-4">
-              Insira o código enviado ao seu e-mail e defina a sua nova senha institucional.
+              Insira o token recebido no link de recuperação e defina sua nova senha.
             </p>
           </div>
 
@@ -107,23 +108,22 @@ export default function VerifyCode() {
           {/* Form */}
           <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
             
-            {/* Reset Code Input */}
+            {/* Reset Token Input */}
             <div className="space-y-1.5">
-              <Label htmlFor="code">Código de verificação</Label>
+              <Label htmlFor="token">Token de redefinição</Label>
               <div className="relative">
                 <Key className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  id="code"
+                  id="token"
                   type="text"
-                  placeholder="Ex: 123456"
-                  maxLength={6}
+                  placeholder="Cole o token recebido"
                   className="pl-9 bg-card border-border/80 tracking-widest font-semibold focus-visible:bg-card"
                   disabled={loading}
-                  {...register("code")}
+                  {...register("token")}
                 />
               </div>
-              {errors.code && (
-                <p className="text-xs text-destructive font-medium mt-1">{errors.code.message}</p>
+              {errors.token && (
+                <p className="text-xs text-destructive font-medium mt-1">{errors.token.message}</p>
               )}
             </div>
 
@@ -201,7 +201,7 @@ export default function VerifyCode() {
               className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline cursor-pointer"
             >
               <ArrowLeft className="h-4 w-4" />
-              Cancelar e Voltar
+              Voltar para o login
             </span>
           </div>
         </div>
