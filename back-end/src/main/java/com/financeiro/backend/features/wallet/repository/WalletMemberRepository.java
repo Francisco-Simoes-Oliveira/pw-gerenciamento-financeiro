@@ -9,6 +9,7 @@ import com.financeiro.backend.features.wallet.entity.WalletMember;
 @Repository
 public interface WalletMemberRepository extends JpaRepository<WalletMember, UUID> {
     List<WalletMember> findByWalletId(UUID walletId);
+    List<WalletMember> findByUserId(UUID userId);
     boolean existsByWalletIdAndUserId(UUID walletId, UUID userId);
     java.util.Optional<WalletMember> findByWalletIdAndUserId(UUID walletId, UUID userId);
     long countByWalletId(UUID walletId);

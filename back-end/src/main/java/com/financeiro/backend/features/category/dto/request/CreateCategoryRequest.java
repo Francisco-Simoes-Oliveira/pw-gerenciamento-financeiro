@@ -9,6 +9,7 @@ import com.financeiro.backend.features.category.enums.CategoryType;
 
 @Data
 public class CreateCategoryRequest {
+    @NotNull(message = "{wallet.obrigatorio}")
     private UUID walletId;
 
     @NotBlank(message = "{name.obrigatorio}")

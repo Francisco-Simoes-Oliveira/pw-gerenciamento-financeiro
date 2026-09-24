@@ -1,5 +1,6 @@
 package com.financeiro.backend.features.category.repository;
 
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -9,4 +10,5 @@ import com.financeiro.backend.features.category.entity.Category;
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
     boolean existsByWalletIdAndName(UUID walletId, String name);
     long countByWalletId(UUID walletId);
+    List<Category> findByWalletId(UUID walletId);
 }

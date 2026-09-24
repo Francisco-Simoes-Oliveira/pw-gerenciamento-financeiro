@@ -2,7 +2,6 @@ package com.financeiro.backend.features.category.service.impl;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +18,7 @@ import com.financeiro.backend.features.subscription.entity.UserSubscription;
 import com.financeiro.backend.features.subscription.repository.UserSubscriptionRepository;
 import com.financeiro.backend.features.wallet.entity.Wallet;
 import com.financeiro.backend.features.wallet.repository.WalletRepository;
+import com.financeiro.backend.features.wallet.service.WalletAccessService;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
@@ -35,6 +35,9 @@ public class CategoryServiceImpl implements CategoryService {
     @Autowired
     private CategoryMapper mapper;
 
+    @Autowired
+    private WalletAccessService walletAccessService;
+
     @Override
     public CategoryResponse insert(CreateCategoryRequest request, UUID currentUserId) {
         if (request.getWalletId() != null && repository.existsByWalletIdAndName(request.getWalletId(), request.getName())) {
@@ -42,34 +45,27 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         Category category = mapper.toEntity(request);
-        
-        if (request.getWalletId() != null) {
-            Wallet wallet = walletRepository.findById(request.getWalletId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Carteira não encontrada."));
-            
-            if (!wallet.getOwner().getId().equals(currentUserId)) {
-                throw new SecurityException("Acesso negado à carteira.");
+
+        Wallet wallet = walletRepository.findById(request.getWalletId())
+                .orElseThrow(() -> new ResourceNotFoundException("Carteira não encontrada."));
+
+        walletAccessService.requireOwner(wallet, currentUserId);
+
+        UserSubscription subscription = subscriptionRepository.findByUserId(wallet.getOwner().getId())
+                .orElseThrow(() -> new IllegalStateException("O proprietário precisa de uma assinatura ativa."));
+
+        Integer maxCategories = subscription.getPlan().getMaxCategories();
+        if (maxCategories != null) {
+            long currentCategories = repository.countByWalletId(wallet.getId());
+            if (currentCategories >= maxCategories) {
+                throw new IllegalArgumentException("Limite de categorias do plano atingido.");
             }
-                    
-            UserSubscription subscription = subscriptionRepository.findByUserId(wallet.getOwner().getId())
-                    .orElseThrow(() -> new IllegalStateException("O proprietário precisa de uma assinatura ativa."));
-                    
-            Integer maxCategories = subscription.getPlan().getMaxCategories();
-            if (maxCategories != null) {
-                long currentCategories = repository.countByWalletId(wallet.getId());
-                if (currentCategories >= maxCategories) {
-                    throw new IllegalArgumentException("Limite de categorias do plano atingido.");
-                }
-            }
-            
-            category.setWallet(wallet);
         }
-        
+
+        category.setWallet(wallet);
+        category.setSystemCategory(false);
         if (category.getActive() == null) {
             category.setActive(true);
-        }
-        if (category.getSystemCategory() == null) {
-            category.setSystemCategory(false);
         }
 
         Category saved = repository.save(category);
@@ -80,20 +76,17 @@ public class CategoryServiceImpl implements CategoryService {
     public List<CategoryResponse> listByWallet(UUID walletId, UUID currentUserId) {
         Wallet wallet = walletRepository.findById(walletId)
             .orElseThrow(() -> new ResourceNotFoundException("Carteira não encontrada."));
-        if (!wallet.getOwner().getId().equals(currentUserId)) {
-            throw new SecurityException("Acesso negado à carteira.");
-        }
-        return repository.findAll().stream()
-                .filter(c -> c.getWallet() != null && c.getWallet().getId().equals(walletId))
+        walletAccessService.requireView(wallet, currentUserId);
+        return repository.findByWalletId(walletId).stream()
                 .map(mapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public CategoryResponse searchById(UUID id, UUID currentUserId) {
         Category category = findEntityById(id);
-        if (category.getWallet() != null && !category.getWallet().getOwner().getId().equals(currentUserId)) {
-            throw new SecurityException("Acesso negado à categoria.");
+        if (category.getWallet() != null) {
+            walletAccessService.requireView(category.getWallet(), currentUserId);
         }
         return mapper.toResponse(category);
     }
@@ -101,9 +94,13 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse alter(UUID id, UpdateCategoryRequest request, UUID currentUserId) {
         Category category = findEntityById(id);
-        
-        if (category.getWallet() != null && !category.getWallet().getOwner().getId().equals(currentUserId)) {
-            throw new SecurityException("Acesso negado à categoria.");
+
+        if (Boolean.TRUE.equals(category.getSystemCategory())) {
+            throw new IllegalArgumentException("Categorias de sistema não podem ser alteradas.");
+        }
+
+        if (category.getWallet() != null) {
+            walletAccessService.requireOwner(category.getWallet(), currentUserId);
         }
         
         if (request.getName() != null && !request.getName().equals(category.getName())) {
@@ -120,8 +117,8 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void remove(UUID id, UUID currentUserId) {
         Category category = findEntityById(id);
-        if (category.getWallet() != null && !category.getWallet().getOwner().getId().equals(currentUserId)) {
-            throw new SecurityException("Acesso negado à categoria.");
+        if (category.getWallet() != null) {
+            walletAccessService.requireOwner(category.getWallet(), currentUserId);
         }
         if (Boolean.TRUE.equals(category.getSystemCategory())) {
             throw new IllegalArgumentException("Categorias de sistema não podem ser excluídas.");

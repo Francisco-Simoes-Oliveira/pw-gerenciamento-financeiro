@@ -1,5 +1,6 @@
 package com.financeiro.backend.features.transaction.repository;
 
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -8,4 +9,5 @@ import com.financeiro.backend.features.transaction.entity.Transaction;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
     boolean existsByWalletId(UUID walletId);
+    List<Transaction> findByWalletIdOrderByTransactionDateDesc(UUID walletId);
 }

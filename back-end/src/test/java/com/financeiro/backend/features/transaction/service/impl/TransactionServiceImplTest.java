@@ -1,8 +1,12 @@
 package com.financeiro.backend.features.transaction.service.impl;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -14,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 import com.financeiro.backend.features.auth.entity.User;
 import com.financeiro.backend.features.auth.repository.UserRepository;
@@ -28,8 +33,8 @@ import com.financeiro.backend.features.transaction.enums.TransactionType;
 import com.financeiro.backend.features.transaction.mapper.TransactionMapper;
 import com.financeiro.backend.features.transaction.repository.TransactionRepository;
 import com.financeiro.backend.features.wallet.entity.Wallet;
-import com.financeiro.backend.features.wallet.repository.WalletMemberRepository;
 import com.financeiro.backend.features.wallet.repository.WalletRepository;
+import com.financeiro.backend.features.wallet.service.WalletAccessService;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionServiceImplTest {
@@ -41,9 +46,6 @@ class TransactionServiceImplTest {
     private WalletRepository walletRepository;
 
     @Mock
-    private WalletMemberRepository walletMemberRepository;
-
-    @Mock
     private CategoryRepository categoryRepository;
 
     @Mock
@@ -51,16 +53,18 @@ class TransactionServiceImplTest {
 
     @Mock
     private TransactionMapper mapper;
-    
+
     @Mock
     private FinancialService financialService;
+
+    @Mock
+    private WalletAccessService walletAccessService;
 
     @InjectMocks
     private TransactionServiceImpl transactionService;
 
     private User owner;
     private Wallet wallet;
-    private Wallet destWallet;
     private Category categoryIncome;
     private Category categoryExpense;
 
@@ -68,77 +72,124 @@ class TransactionServiceImplTest {
     void setUp() {
         owner = new User();
         owner.setId(UUID.randomUUID());
-        
+
         wallet = Wallet.builder().id(UUID.randomUUID()).owner(owner).build();
-        destWallet = Wallet.builder().id(UUID.randomUUID()).owner(owner).build();
-        
-        categoryIncome = Category.builder().id(UUID.randomUUID()).type(CategoryType.INCOME).build();
-        categoryExpense = Category.builder().id(UUID.randomUUID()).type(CategoryType.EXPENSE).build();
+
+        categoryIncome = Category.builder()
+                .id(UUID.randomUUID())
+                .wallet(wallet)
+                .type(CategoryType.INCOME)
+                .systemCategory(false)
+                .build();
+        categoryExpense = Category.builder()
+                .id(UUID.randomUUID())
+                .wallet(wallet)
+                .type(CategoryType.EXPENSE)
+                .systemCategory(false)
+                .build();
     }
 
     @Test
-    void testInsert_InvalidCategoryType_ShouldThrow() {
+    void insertWithInvalidCategoryTypeShouldThrow() {
         CreateTransactionRequest request = new CreateTransactionRequest();
         request.setWalletId(wallet.getId());
         request.setCategoryId(categoryExpense.getId());
         request.setType(TransactionType.INCOME);
         request.setAmount(BigDecimal.valueOf(100.00));
-        
+
         when(walletRepository.findById(wallet.getId())).thenReturn(Optional.of(wallet));
         when(categoryRepository.findById(categoryExpense.getId())).thenReturn(Optional.of(categoryExpense));
-        
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
-            transactionService.insert(owner.getId(), request);
-        });
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> transactionService.insert(owner.getId(), request));
+
         assertEquals("Receitas devem usar categorias do tipo INCOME.", ex.getMessage());
     }
-    
+
     @Test
-    void testInsert_TransferToSameWallet_ShouldThrow() {
+    void insertTransferToSameWalletShouldThrow() {
         CreateTransactionRequest request = new CreateTransactionRequest();
         request.setWalletId(wallet.getId());
-        request.setDestinationWalletId(wallet.getId()); // Mesma carteira
+        request.setDestinationWalletId(wallet.getId());
         request.setType(TransactionType.TRANSFER);
-        
+
         when(walletRepository.findById(wallet.getId())).thenReturn(Optional.of(wallet));
-        
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
-            transactionService.insert(owner.getId(), request);
-        });
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> transactionService.insert(owner.getId(), request));
+
         assertEquals("A carteira de origem e destino não podem ser as mesmas.", ex.getMessage());
     }
 
     @Test
-    void testInsert_Success() {
+    void insertWithCategoryFromAnotherWalletShouldBeDenied() {
+        User otherOwner = new User();
+        otherOwner.setId(UUID.randomUUID());
+        Wallet otherWallet = Wallet.builder().id(UUID.randomUUID()).owner(otherOwner).build();
+        Category foreignCategory = Category.builder()
+                .id(UUID.randomUUID())
+                .wallet(otherWallet)
+                .type(CategoryType.INCOME)
+                .systemCategory(false)
+                .build();
+
+        CreateTransactionRequest request = new CreateTransactionRequest();
+        request.setWalletId(wallet.getId());
+        request.setCategoryId(foreignCategory.getId());
+        request.setType(TransactionType.INCOME);
+        request.setAmount(BigDecimal.TEN);
+
+        when(walletRepository.findById(wallet.getId())).thenReturn(Optional.of(wallet));
+        when(categoryRepository.findById(foreignCategory.getId())).thenReturn(Optional.of(foreignCategory));
+
+        assertThrows(AccessDeniedException.class,
+                () -> transactionService.insert(owner.getId(), request));
+
+        verify(repository, never()).save(any());
+        verify(financialService, never()).applyIncome(any(), any(), any());
+    }
+
+    @Test
+    void insertSuccessShouldApplyFinancialImpact() {
         CreateTransactionRequest request = new CreateTransactionRequest();
         request.setWalletId(wallet.getId());
         request.setCategoryId(categoryIncome.getId());
         request.setType(TransactionType.INCOME);
         request.setAmount(BigDecimal.valueOf(100.00));
-        
+
         when(walletRepository.findById(wallet.getId())).thenReturn(Optional.of(wallet));
         when(categoryRepository.findById(categoryIncome.getId())).thenReturn(Optional.of(categoryIncome));
         when(userRepository.findById(owner.getId())).thenReturn(Optional.of(owner));
-        
-        Transaction tx = Transaction.builder().type(TransactionType.INCOME).amount(BigDecimal.valueOf(100.00)).build();
+
+        Transaction tx = Transaction.builder()
+                .type(TransactionType.INCOME)
+                .amount(BigDecimal.valueOf(100.00))
+                .build();
         when(mapper.toEntity(request)).thenReturn(tx);
-        when(repository.save(any())).thenReturn(tx);
-        when(mapper.toResponse(tx)).thenReturn(new TransactionResponse());
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(mapper.toResponse(any())).thenReturn(new TransactionResponse());
 
         transactionService.insert(owner.getId(), request);
-        
+
+        verify(walletAccessService).requireTransactionEdit(wallet, owner.getId());
         verify(financialService, times(1)).applyIncome(wallet, tx, owner);
     }
-    
+
     @Test
-    void testDelete_Success() {
-        Transaction tx = Transaction.builder().id(UUID.randomUUID()).wallet(wallet).type(TransactionType.EXPENSE).amount(BigDecimal.valueOf(50)).build();
-        
+    void deleteSuccessShouldReverseFinancialImpact() {
+        Transaction tx = Transaction.builder()
+                .id(UUID.randomUUID())
+                .wallet(wallet)
+                .type(TransactionType.EXPENSE)
+                .amount(BigDecimal.valueOf(50))
+                .build();
+
         when(repository.findById(tx.getId())).thenReturn(Optional.of(tx));
         when(userRepository.findById(owner.getId())).thenReturn(Optional.of(owner));
-        
+
         transactionService.remove(tx.getId(), owner.getId());
-        
+
+        verify(walletAccessService).requireTransactionEdit(wallet, owner.getId());
         verify(financialService, times(1)).deleteTransaction(tx, owner);
         verify(repository, times(1)).delete(tx);
     }
