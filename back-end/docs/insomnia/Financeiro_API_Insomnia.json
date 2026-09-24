@@ -1,0 +1,466 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-08-06T22:02:42.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "wrk_83384ddacc4a45069b3638bbb022a14a",
+      "parentId": null,
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "name": "PW Financeiro API",
+      "description": "Coleção de testes sem endpoints fictícios (Validadas)",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "env_8aae1c318378466dae975ea9c0bf5ef3",
+      "parentId": "wrk_83384ddacc4a45069b3638bbb022a14a",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:8080",
+        "jwt": "",
+        "wallet_id": "",
+        "category_id": "",
+        "user_id": "",
+        "plan_id": ""
+      },
+      "_type": "environment"
+    },
+    {
+      "_id": "fld_f18b4785cd444b17aaefa365b5499568",
+      "parentId": "wrk_83384ddacc4a45069b3638bbb022a14a",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "name": "1. Users & Profiles",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1786064562017,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_70f9d9128cea42a5bc5f683313fb4355",
+      "parentId": "fld_f18b4785cd444b17aaefa365b5499568",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "url": "{{ _.base_url }}/api/users",
+      "name": "Create User (Register)",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@email.com\",\n  \"password\": \"senhaForte123!\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1786064562017,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_4463078ac7474f48a5202304c3db77d1",
+      "parentId": "fld_f18b4785cd444b17aaefa365b5499568",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "url": "{{ _.base_url }}/api/users/{{ _.user_id }}/profile",
+      "name": "Create User Profile",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"userId\": \"{{ _.user_id }}\",\n  \"fullName\": \"João Roberto Silva\",\n  \"birthDate\": \"1990-01-01\",\n  \"phone\": \"11999999999\",\n  \"avatarUrl\": \"http://img.com/a.png\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1786064562017,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_066fca1345ef4bec9b7527e932c0e5d6",
+      "parentId": "fld_f18b4785cd444b17aaefa365b5499568",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "url": "{{ _.base_url }}/api/users/{{ _.user_id }}",
+      "name": "Get User",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1786064562017,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_0bfb72e49ea445eb919951891207714e",
+      "parentId": "wrk_83384ddacc4a45069b3638bbb022a14a",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "name": "2. Auth (Password Reset)",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1786064562017,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_7813fee603d54be3b010d64e6f3ffcb4",
+      "parentId": "fld_0bfb72e49ea445eb919951891207714e",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "url": "{{ _.base_url }}/api/auth/password-reset/request",
+      "name": "Password Reset Request",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"joao@email.com\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1786064562017,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_b709a7af3b674ffcb87290c9aa8013fd",
+      "parentId": "fld_0bfb72e49ea445eb919951891207714e",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "url": "{{ _.base_url }}/api/auth/password-reset/confirm",
+      "name": "Password Reset Confirm",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"token\": \"token-aqui\",\n  \"newPassword\": \"novaSenha321!\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1786064562017,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_75b031c86bd540368ac9639e9059f49d",
+      "parentId": "wrk_83384ddacc4a45069b3638bbb022a14a",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "name": "3. Plans & Subscriptions",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1786064562017,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_c2135f295d854052b5b3f10d16dc1b67",
+      "parentId": "fld_75b031c86bd540368ac9639e9059f49d",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "url": "{{ _.base_url }}/api/plans",
+      "name": "Create Plan",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Premium\",\n  \"price\": 29.90,\n  \"maxWallets\": 5,\n  \"maxMembersPerWallet\": 2,\n  \"maxCategories\": 50,\n  \"active\": true,\n  \"displayOrder\": 1\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1786064562017,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_af82e7bb40384cecabfa6429043e6825",
+      "parentId": "fld_75b031c86bd540368ac9639e9059f49d",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "url": "{{ _.base_url }}/api/subscriptions",
+      "name": "Subscribe User",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"userId\": \"{{ _.user_id }}\",\n  \"planId\": \"{{ _.plan_id }}\",\n  \"autoRenew\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1786064562017,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_e6a1ef0fa0ee47f6a985a9b0730f929f",
+      "parentId": "wrk_83384ddacc4a45069b3638bbb022a14a",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "name": "4. Wallets",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1786064562017,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_0f5eb1f30cbf4fb686acde8edf319d7f",
+      "parentId": "fld_e6a1ef0fa0ee47f6a985a9b0730f929f",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "url": "{{ _.base_url }}/api/wallets?ownerId={{ _.user_id }}",
+      "name": "Create Wallet",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Conta Corrente Nubank\",\n  \"description\": \"Conta principal\",\n  \"currency\": \"BRL\",\n  \"color\": \"#8A05BE\",\n  \"icon\": \"bank\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1786064562017,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_89c263dde6d447d8ba4af15a4d336959",
+      "parentId": "fld_e6a1ef0fa0ee47f6a985a9b0730f929f",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "url": "{{ _.base_url }}/api/wallets?ownerId={{ _.user_id }}",
+      "name": "List Wallets",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1786064562017,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_0d093a2face4465fa517c4dde16db01c",
+      "parentId": "wrk_83384ddacc4a45069b3638bbb022a14a",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "name": "5. Categories",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1786064562017,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_047b39bcb04c4fcdb174e394a1eb7fc1",
+      "parentId": "fld_0d093a2face4465fa517c4dde16db01c",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "url": "{{ _.base_url }}/api/categories",
+      "name": "Create Category (Income)",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Salário\",\n  \"type\": \"INCOME\",\n  \"color\": \"#00FF00\",\n  \"icon\": \"money\",\n  \"active\": true,\n  \"systemCategory\": false\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1786064562017,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_756a6e3b9ba74a6691d8290eaf791ec0",
+      "parentId": "fld_0d093a2face4465fa517c4dde16db01c",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "url": "{{ _.base_url }}/api/categories",
+      "name": "Create Category (Expense)",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Alimentação\",\n  \"type\": \"EXPENSE\",\n  \"color\": \"#FF0000\",\n  \"icon\": \"restaurant\",\n  \"active\": true,\n  \"systemCategory\": false\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1786064562017,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_656a712dd4064d708a9f2439ae605547",
+      "parentId": "wrk_83384ddacc4a45069b3638bbb022a14a",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "name": "6. Transactions",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1786064562017,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_90454fe9097841d084c0e1d1e66dfbc4",
+      "parentId": "fld_656a712dd4064d708a9f2439ae605547",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "url": "{{ _.base_url }}/api/transactions?currentUserId={{ _.user_id }}",
+      "name": "Create Income",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"title\": \"Salário de Março\",\n  \"amount\": 5000.00,\n  \"type\": \"INCOME\",\n  \"status\": \"PAID\",\n  \"walletId\": \"{{ _.wallet_id }}\",\n  \"categoryId\": \"{{ _.category_id }}\",\n  \"createdById\": \"{{ _.user_id }}\",\n  \"transactionDate\": \"2026-03-05T10:00:00\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1786064562017,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_b04454694cd5428ba7cfdf3a0222a1c1",
+      "parentId": "fld_656a712dd4064d708a9f2439ae605547",
+      "modified": 1786064562017,
+      "created": 1786064562017,
+      "url": "{{ _.base_url }}/api/transactions?walletId={{ _.wallet_id }}&currentUserId={{ _.user_id }}",
+      "name": "List Transactions",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1786064562017,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    }
+  ]
+}

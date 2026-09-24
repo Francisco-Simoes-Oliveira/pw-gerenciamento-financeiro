@@ -27,7 +27,7 @@ A aplicação é construída utilizando as seguintes tecnologias e frameworks:
 
 ## Arquitetura
 
-O projeto adota uma arquitetura em camadas focada em domínios (_Feature-Based_). Toda lógica e persistência estão bem separadas, respeitando o princípio de responsabilidade única (SOLID). Utilizamos o padrão de DTOs para tráfego externo e MapStruct para tradução ágil entre DTO e Entidade. As respostas HTTP são padronizadas com a classe `ApiResponse` e o tratamento de erros é centralizado no `GlobalExceptionHandler`.
+O projeto adota uma arquitetura em camadas focada em domínios (*Feature-Based*). Toda lógica e persistência estão bem separadas, respeitando o princípio de responsabilidade única (SOLID). Utilizamos o padrão de DTOs para tráfego externo e MapStruct para tradução ágil entre DTO e Entidade. As respostas HTTP são padronizadas com a classe `ApiResponse` e o tratamento de erros é centralizado no `GlobalExceptionHandler`.
 
 ### Árvore Resumida do Projeto
 
@@ -97,7 +97,7 @@ erDiagram
 ✅ Extratos com Filtros (Specifications)  
 ✅ Indicadores Analíticos  
 ✅ Documentação Swagger (OpenAPI)  
-✅ Testes Unitários e Cobertura (JUnit + Mockito)
+✅ Testes Unitários e Cobertura (JUnit + Mockito)  
 
 ---
 
@@ -105,7 +105,7 @@ erDiagram
 
 O projeto continua em evolução. As seguintes funcionalidades estão no planejamento e ainda não foram implementadas:
 
-- **Autenticação JWT (Login) e Proteção de Rotas (Spring Security FilterChain)** _(Próxima Sprint)_
+- **Autenticação JWT (Login) e Proteção de Rotas (Spring Security FilterChain)** *(Próxima Sprint)*
 - Gamificação e Pontuações
 - Metas financeiras e Orçamentos Fixos
 - Notificações de Pagamentos e Vencimentos
@@ -118,14 +118,12 @@ O projeto continua em evolução. As seguintes funcionalidades estão no planeja
 ## Como Executar
 
 ### 1. Clonar o Repositório
-
 ```bash
 git clone <url-do-repositorio>
 cd pw-gerenciamento-financeiro/back-end
 ```
 
 ### 2. Configurar o Banco de Dados
-
 A aplicação utiliza o **MariaDB** por padrão. Crie um banco local:
 
 ```sql
@@ -133,7 +131,6 @@ CREATE DATABASE financeiro_db;
 ```
 
 Ajuste as credenciais no arquivo `src/main/resources/application.properties` se necessário:
-
 ```properties
 spring.datasource.url=jdbc:mariadb://localhost:3306/financeiro_db
 spring.datasource.username=root
@@ -144,14 +141,12 @@ spring.jpa.hibernate.ddl-auto=update
 ### 3. Executar o Projeto
 
 Via Maven Wrapper (Linux/Mac):
-
 ```bash
 ./mvnw clean install
 ./mvnw spring-boot:run
 ```
 
 Via Maven Wrapper (Windows):
-
 ```cmd
 .\mvnw.cmd clean install
 .\mvnw.cmd spring-boot:run
@@ -166,7 +161,6 @@ A API estará disponível localmente em: `http://localhost:8080/`
 A arquitetura financeira e de relatórios foi extensamente testada para garantir consistência de saldos (Transactions vs FinanceService).
 
 Para rodar a suíte de testes unitários localmente (utilizando banco H2 em memória):
-
 ```bash
 ./mvnw test
 ```
@@ -191,7 +185,7 @@ Para rodar a suíte de testes unitários localmente (utilizando banco H2 em mem�
 
 ## Segurança e Autenticação
 
-A arquitetura de segurança atual conta com a estrutura para Reset de Senhas e o esqueleto de configuração do Spring Security e OAuth2.
+A arquitetura de segurança atual conta com a estrutura para Reset de Senhas e o esqueleto de configuração do Spring Security e OAuth2. 
 Atualmente, as rotas aguardam a implementação definitiva do AuthController de Login e dos filtros que validarão a sessão via token JWT (JwtAuthenticationFilter).
 
 ### Fluxo Geral do Sistema (Com Auth Futuro)
@@ -210,22 +204,22 @@ flowchart TD
 
 ## Roadmap
 
-| Sprint       | Status | Descrição                                                                |
-| ------------ | :----: | ------------------------------------------------------------------------ |
-| **Sprint 1** |   ✅   | Criação de Estrutura, Arquitetura, Padrão DTO e Exceções                 |
-| **Sprint 2** |   ✅   | Domínio Base: Usuários, Perfis, Configurações de Security                |
-| **Sprint 3** |   ✅   | Core Financeiro: Transações, Carteiras, Membros, Estornos e Recálculos   |
-| **Sprint 4** |   ✅   | CQRS Básico (Leitura): Dashboard, Extratos, Categorização, Indicadores   |
-| **Sprint 5** |   ⏳   | Segurança Avançada: Login real (Autenticação JWT), Proteção de Endpoints |
-| **Sprint 6** |   ⏳   | Assinaturas, Limites, Testes Finais de Integração                        |
-| **Sprint 7** |   ⏳   | Notificações, Gamificação e Metas                                        |
+| Sprint | Status | Descrição |
+|--------|:------:|-----------|
+| **Sprint 1** | ✅ | Criação de Estrutura, Arquitetura, Padrão DTO e Exceções |
+| **Sprint 2** | ✅ | Domínio Base: Usuários, Perfis, Configurações de Security |
+| **Sprint 3** | ✅ | Core Financeiro: Transações, Carteiras, Membros, Estornos e Recálculos |
+| **Sprint 4** | ✅ | CQRS Básico (Leitura): Dashboard, Extratos, Categorização, Indicadores |
+| **Sprint 5** | ⏳ | Segurança Avançada: Login real (Autenticação JWT), Proteção de Endpoints |
+| **Sprint 6** | ⏳ | Assinaturas, Limites, Testes Finais de Integração |
+| **Sprint 7** | ⏳ | Notificações, Gamificação e Metas |
 
 ---
 
 ## Boas Práticas Adotadas
 
-- **DTO Pattern**: Nunca retornar ou expor Entidades (`@Entity`) diretamente nos Controllers.
-- **MapStruct**: Mapeamento seguro de ponta a ponta sem boilerplate ou _Transient Exceptions_.
-- **ApiResponse**: Todo output da API tem o mesmo formato unificado (`success`, `message`, `data`).
-- **GlobalExceptionHandler**: Tratamento global de falhas capturando `IllegalArgumentException`, `ResourceNotFoundException` e padronizando os erros do `jakarta.validation`.
-- **Clean Code & SOLID**: As lógicas financeiras mais pesadas estão segregadas no `FinancialService`, enquanto as leituras foram movidas para `FinancialReportService`, removendo as regras do banco dos Controllers.
+* **DTO Pattern**: Nunca retornar ou expor Entidades (`@Entity`) diretamente nos Controllers.
+* **MapStruct**: Mapeamento seguro de ponta a ponta sem boilerplate ou *Transient Exceptions*.
+* **ApiResponse**: Todo output da API tem o mesmo formato unificado (`success`, `message`, `data`).
+* **GlobalExceptionHandler**: Tratamento global de falhas capturando `IllegalArgumentException`, `ResourceNotFoundException` e padronizando os erros do `jakarta.validation`.
+* **Clean Code & SOLID**: As lógicas financeiras mais pesadas estão segregadas no `FinancialService`, enquanto as leituras foram movidas para `FinancialReportService`, removendo as regras do banco dos Controllers.

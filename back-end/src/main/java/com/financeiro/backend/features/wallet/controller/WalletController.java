@@ -1,0 +1,107 @@
+package com.financeiro.backend.features.wallet.controller;
+
+import java.util.List;
+import java.util.UUID;
+
+import jakarta.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.financeiro.backend.common.dto.ApiResponse;
+import com.financeiro.backend.features.wallet.dto.request.CreateWalletRequest;
+import com.financeiro.backend.features.wallet.dto.request.UpdateWalletRequest;
+import com.financeiro.backend.features.wallet.dto.request.AddWalletMemberRequest;
+import com.financeiro.backend.features.wallet.dto.request.UpdateWalletMemberRequest;
+import com.financeiro.backend.features.wallet.dto.response.WalletMemberResponse;
+import com.financeiro.backend.features.wallet.dto.response.WalletResponse;
+import com.financeiro.backend.features.wallet.service.WalletService;
+import com.financeiro.backend.security.services.UserDetailsImpl;
+
+@RestController
+@RequestMapping("/api/wallets")
+@CrossOrigin(origins = "*", maxAge = 3600)
+public class WalletController {
+
+    @Autowired
+    private WalletService service;
+
+    private UUID getCurrentUserId() {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return userDetails.getId();
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<WalletResponse>> insert(@Valid @RequestBody CreateWalletRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(service.insert(getCurrentUserId(), request)));
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<WalletResponse>>> listByOwner() {
+        return ResponseEntity.ok(ApiResponse.success(service.listByOwner(getCurrentUserId())));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<WalletResponse>> searchById(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(service.searchById(id, getCurrentUserId())));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<WalletResponse>> alter(@PathVariable UUID id, @Valid @RequestBody UpdateWalletRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(service.alter(id, getCurrentUserId(), request)));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> remove(@PathVariable UUID id) {
+        service.remove(id, getCurrentUserId());
+        return ResponseEntity.ok(ApiResponse.success(null, "Carteira removida com sucesso."));
+    }
+
+    // Endpoints de Membros
+    @PostMapping("/{id}/members/{targetUserId}")
+    public ResponseEntity<ApiResponse<Void>> addMember(@PathVariable UUID id, @PathVariable UUID targetUserId, @RequestParam String permission) {
+        service.addMember(id, getCurrentUserId(), targetUserId, permission);
+        return ResponseEntity.ok(ApiResponse.success(null, "Membro adicionado com sucesso."));
+    }
+
+    @GetMapping("/{id}/members")
+    public ResponseEntity<ApiResponse<List<WalletMemberResponse>>> listMembers(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(service.listMembers(id, getCurrentUserId())));
+    }
+
+    @PostMapping("/{id}/members")
+    public ResponseEntity<ApiResponse<Void>> addMemberByEmail(
+            @PathVariable UUID id,
+            @Valid @RequestBody AddWalletMemberRequest request) {
+        service.addMemberByEmail(id, getCurrentUserId(), request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Membro adicionado com sucesso."));
+    }
+
+    @PatchMapping("/{id}/members/{targetUserId}")
+    public ResponseEntity<ApiResponse<Void>> updateMember(
+            @PathVariable UUID id,
+            @PathVariable UUID targetUserId,
+            @Valid @RequestBody UpdateWalletMemberRequest request) {
+        service.updateMember(id, getCurrentUserId(), targetUserId, request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Permissão atualizada com sucesso."));
+    }
+
+    @DeleteMapping("/{id}/members/{targetUserId}")
+    public ResponseEntity<ApiResponse<Void>> removeMember(@PathVariable UUID id, @PathVariable UUID targetUserId) {
+        service.removeMember(id, getCurrentUserId(), targetUserId);
+        return ResponseEntity.ok(ApiResponse.success(null, "Membro removido com sucesso."));
+    }
+}
+
