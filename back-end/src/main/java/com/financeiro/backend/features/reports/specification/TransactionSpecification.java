@@ -35,11 +35,15 @@ public class TransactionSpecification {
             if (filter.getCategoryId() != null) {
                 predicates = cb.and(predicates, cb.equal(root.get("category").get("id"), filter.getCategoryId()));
             }
+            var date = cb.<java.time.LocalDateTime>coalesce(root.get("transactionDate"), root.get("createdAt"));
+            if (filter.getUserId() != null) {
+                predicates = cb.and(predicates, cb.equal(root.get("createdBy").get("id"), filter.getUserId()));
+            }
             if (filter.getStartDate() != null) {
-                predicates = cb.and(predicates, cb.greaterThanOrEqualTo(root.get("createdAt"), filter.getStartDate().atStartOfDay()));
+                predicates = cb.and(predicates, cb.greaterThanOrEqualTo(date, filter.getStartDate().atStartOfDay()));
             }
             if (filter.getEndDate() != null) {
-                predicates = cb.and(predicates, cb.lessThanOrEqualTo(root.get("createdAt"), filter.getEndDate().atTime(23, 59, 59)));
+                predicates = cb.and(predicates, cb.lessThan(date, filter.getEndDate().plusDays(1).atStartOfDay()));
             }
             if (filter.getType() != null) {
                 predicates = cb.and(predicates, cb.equal(root.get("type"), filter.getType()));

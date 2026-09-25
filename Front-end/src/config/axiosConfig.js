@@ -26,6 +26,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (axios.isCancel(error)) return Promise.reject(error);
     if (error.response) {
       const { status, data } = error.response;
       const message = data?.message || 'Ocorreu um erro na requisição.';

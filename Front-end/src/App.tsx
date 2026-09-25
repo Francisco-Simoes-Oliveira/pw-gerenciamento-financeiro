@@ -10,6 +10,7 @@ import Dashboard from "./features/dashboard/pages/Dashboard"
 import Wallets from "./features/wallets/pages/Wallets"
 import WalletDetails from "./features/wallets/pages/WalletDetails"
 import Transactions from "./features/transactions/pages/Transactions"
+import Reports from "./features/reports/pages/Reports"
 import Categories from "./features/categories/pages/Categories"
 import Goals from "./features/goals/pages/Goals"
 import Achievements from "./features/achievements/pages/Achievements"
@@ -55,6 +56,7 @@ export function App() {
               <Route path="/wallets" element={<Wallets />} />
               <Route path="/wallets/:id" element={<WalletDetails />} />
               <Route path="/transactions" element={<Transactions />} />
+              <Route path="/reports" element={<Reports />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/goals" element={<Goals />} />
               <Route path="/achievements" element={<Achievements />} />

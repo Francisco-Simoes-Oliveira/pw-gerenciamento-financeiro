@@ -7,7 +7,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -61,7 +60,6 @@ public class FinancialReportServiceImpl implements FinancialReportService {
     }
 
     @Override
-    @Cacheable(value = "dashboard", key = "#currentUserId + '_' + (#filter.walletId != null ? #filter.walletId : 'ALL')")
     public DashboardSummaryResponse getDashboardSummary(ReportFilter filter, UUID currentUserId) {
         validateWalletFilter(filter, currentUserId);
         DashboardProjection proj = dashboardRepository.getDashboardConsolidated(currentUserId, filter.getWalletId());
@@ -88,7 +86,6 @@ public class FinancialReportServiceImpl implements FinancialReportService {
     }
 
     @Override
-    @Cacheable(value = "monthly", key = "#currentUserId + '_' + (#filter.walletId != null ? #filter.walletId : 'ALL')")
     public List<MonthlyBalanceResponse> getMonthlyBalance(ReportFilter filter, UUID currentUserId) {
         validateWalletFilter(filter, currentUserId);
         List<MonthlyProjection> projs = dashboardRepository.getMonthlyBalance(currentUserId, filter.getWalletId());
@@ -106,7 +103,6 @@ public class FinancialReportServiceImpl implements FinancialReportService {
     }
 
     @Override
-    @Cacheable(value = "categories", key = "#currentUserId + '_' + (#filter.walletId != null ? #filter.walletId : 'ALL')")
     public List<CategoryExpenseResponse> getExpensesByCategory(ReportFilter filter, UUID currentUserId) {
         validateWalletFilter(filter, currentUserId);
         var projs = categoryReportRepository.getExpensesByCategory(currentUserId, filter.getWalletId());
@@ -160,12 +156,11 @@ public class FinancialReportServiceImpl implements FinancialReportService {
                 .description(t.getDescription())
                 .attachmentUrl(t.getAttachmentUrl())
                 .amount(t.getAmount())
-                .transactionDate(t.getCreatedAt()) // Emulating balanceAfterOperation might be complex here
+                .transactionDate(t.getTransactionDate() != null ? t.getTransactionDate() : t.getCreatedAt())
                 .build());
     }
 
     @Override
-    @Cacheable(value = "indicators", key = "#currentUserId + '_' + (#filter.walletId != null ? #filter.walletId : 'ALL')")
     public IndicatorsResponse getIndicators(ReportFilter filter, UUID currentUserId) {
         validateWalletFilter(filter, currentUserId);
         IndicatorProjection proj = indicatorRepository.getIndicators(currentUserId, filter.getWalletId());
@@ -181,6 +176,10 @@ public class FinancialReportServiceImpl implements FinancialReportService {
     }
 
     private void validateWalletFilter(ReportFilter filter, UUID currentUserId) {
+        if (filter != null && filter.getStartDate() != null && filter.getEndDate() != null
+                && filter.getEndDate().isBefore(filter.getStartDate())) {
+            throw new IllegalArgumentException("A data final deve ser igual ou posterior à data inicial.");
+        }
         if (filter == null || filter.getWalletId() == null) {
             return;
         }

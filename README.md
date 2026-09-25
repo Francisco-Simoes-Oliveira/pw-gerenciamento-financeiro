@@ -241,6 +241,57 @@ No frontend, `VITE_WS_BASE_URL` é opcional. Quando não configurada, a URL WebS
 
 ---
 
+## Relatório final: extrato em PDF e CSV
+
+Abra **Relatórios** no menu (`/reports`), selecione uma carteira e as datas e clique em **Consultar**.
+O mês atual é preenchido automaticamente. OWNER, EDITOR e VIEWER podem consultar e exportar
+lançamentos de todos os autores nas carteiras às quais têm acesso.
+
+- **PDF e CSV** exportam todos os lançamentos do filtro; a paginação da tela é apenas visual.
+- Totais: receitas pagas, despesas pagas, transferências recebidas/enviadas e variação realizada
+  (`receitas - despesas + transferências recebidas - enviadas`). Pendentes/cancelados são exibidos, sem impacto nos totais.
+- Período inclusivo pela data da transação; dados antigos sem essa data usam a data de criação.
+- A variação não é saldo disponível: não inclui saldo de abertura e o saldo legado da carteira aplica lançamentos sem distinguir status.
+- Transferências recebidas não expõem nomes/dados privados da carteira de origem.
+- A tela se atualiza pelos eventos WebSocket de transação da carteira selecionada. Cada download consulta novamente os dados e as permissões.
+- Até 366 dias e 10.000 lançamentos por consulta; acima disso, reduza o período. Não há truncamento silencioso.
+
+Endpoints autenticados por JWT:
+
+```text
+GET /api/reports/statement/report?walletId=<UUID>&startDate=2026-09-01&endDate=2026-09-30
+GET /api/reports/statement/export?walletId=<UUID>&startDate=2026-09-01&endDate=2026-09-30&format=pdf
+GET /api/reports/statement/export?walletId=<UUID>&startDate=2026-09-01&endDate=2026-09-30&format=csv
+```
+
+Datas omitidas em conjunto significam mês atual; informe ambas para outro período.
+JSON usa `ApiResponse`; downloads retornam bytes com `Content-Disposition: attachment` e `Cache-Control: no-store`.
+CSV usa UTF-8 com BOM, separador `;`, vírgula decimal e proteção contra fórmulas.
+PDF usa Apache PDFBox 3.0.8 (baixado automaticamente pelo Maven), com suporte a português e paginação.
+Caracteres não disponíveis na fonte PDF padrão são substituídos por `?`; o CSV mantém Unicode.
+
+Validação local (Java 21 e Node instalados):
+
+```sh
+cd back-end
+./mvnw test
+cd ../Front-end
+npm ci
+npm run build
+```
+
+Os testes originais são mantidos. Os novos testes cobrem consultas reais em H2, autorização e revogação,
+datas inclusivas, transferências, totais/status, limites, respostas HTTP, CSV e PDF com múltiplas páginas.
+Para gerar um PDF sintético e imagens de conferência durante os testes:
+`./mvnw test -Dstatement.qa.dir=target/statement-qa`.
+
+Roteiro manual: compartilhe uma carteira com um VIEWER, crie receita/despesa paga, pendência e transferência;
+confira os totais em ambas as contas, exporte os dois formatos e tente consultar uma carteira não compartilhada (403).
+Edite um lançamento com OWNER/EDITOR em outra sessão e confirme a atualização sem F5.
+
+A [auditoria do módulo](back-end/docs/reports-audit.md) documenta o que existia e os limites dos endpoints antigos.
+Histórico de saldo e fluxo de caixa ainda são placeholders; o novo extrato não depende deles.
+
 ## Como testar o tempo real
 
 1. Inicie backend e frontend normalmente.
