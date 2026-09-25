@@ -14,6 +14,7 @@ A aplicação é construída utilizando as seguintes tecnologias e frameworks:
 - **Spring Boot 4.0.6**
 - **Spring Data JPA & Hibernate**
 - **Spring Security & OAuth2 Resource Server**
+- **Spring WebSocket** (atualização de transações em tempo real)
 - **MariaDB** (Produção/Desenvolvimento)
 - **H2 Database** (Ambiente de Testes)
 - **Maven**
@@ -47,6 +48,7 @@ src/main/java
         ├── transaction (Transaction core)
         ├── subscription(Plans e UserSubscription)
         ├── reports     (Queries, Projections, Dashboards)
+        ├── realtime    (WebSocket, tickets efêmeros e eventos pós-commit)
         └── finance     (Engine de processamento de saldos)
 ```
 
@@ -61,6 +63,7 @@ src/main/java
 - **Subscription**: Controle de planos (ex: Premium) e gestão de cotas máximas para carteiras e categorias.
 - **Reports**: Módulo exclusivamente de leitura otimizado (Dashboards, Extratos com paginação, Fluxo de Caixa). Separado da camada de transação.
 - **Finance**: Core contábil interno (não exposto em Controller). Garante a consistência dos saldos das carteiras recalculando e aplicando estornos caso uma transação seja editada ou excluída.
+- **Realtime**: Emite eventos somente após o commit das transações e atualiza clientes conectados por WebSocket. O handshake usa um ticket efêmero, de uso único, emitido por uma rota protegida por JWT; o token JWT não é enviado na URL do WebSocket.
 
 ---
 
@@ -96,6 +99,7 @@ erDiagram
 ✅ Dashboard Consolidado  
 ✅ Extratos com Filtros (Specifications)  
 ✅ Indicadores Analíticos  
+✅ Atualização de transações e dashboard em tempo real via WebSocket  
 ✅ Documentação Swagger (OpenAPI)  
 ✅ Testes Unitários e Cobertura (JUnit + Mockito)
 
@@ -105,7 +109,6 @@ erDiagram
 
 O projeto continua em evolução. As seguintes funcionalidades estão no planejamento e ainda não foram implementadas:
 
-- **Autenticação JWT (Login) e Proteção de Rotas (Spring Security FilterChain)** _(Próxima Sprint)_
 - Gamificação e Pontuações
 - Metas financeiras e Orçamentos Fixos
 - Notificações de Pagamentos e Vencimentos
@@ -189,22 +192,28 @@ Para rodar a suíte de testes unitários localmente (utilizando banco H2 em mem�
 
 ---
 
-## Segurança e Autenticação
+## Segurança, Autenticação e Tempo Real
 
-A arquitetura de segurança atual conta com a estrutura para Reset de Senhas e o esqueleto de configuração do Spring Security e OAuth2.
-Atualmente, as rotas aguardam a implementação definitiva do AuthController de Login e dos filtros que validarão a sessão via token JWT (JwtAuthenticationFilter).
+As rotas da aplicação usam autenticação JWT e o acesso aos recursos de carteira é validado no backend conforme o papel do usuário (`OWNER`, `EDITOR` ou `VIEWER`). Para o canal em tempo real, o JWT continua restrito às requisições HTTP autenticadas: o frontend solicita `POST /api/realtime/ticket`, recebe um ticket aleatório com validade de 30 segundos e usa esse ticket uma única vez no handshake de `/ws/realtime`.
 
-### Fluxo Geral do Sistema (Com Auth Futuro)
+Quando uma transação é criada, editada ou excluída, o backend publica um evento interno. O envio WebSocket ocorre com `AFTER_COMMIT`, evitando notificar os clientes sobre uma operação que posteriormente seja revertida. O servidor resolve os usuários autorizados das carteiras afetadas e envia o evento somente a eles.
 
 ```mermaid
 flowchart TD
-    A[Login] --> B[Obtenção do JWT]
-    B --> C[Acesso a Wallet]
-    C --> D[Criação de Category]
-    D --> E[Lançamento de Transaction]
-    E --> F[Auditoria do FinancialService]
-    F --> G[Atualização do Dashboard via Reports]
+    A[Login] --> B[JWT]
+    B --> C[POST /api/realtime/ticket]
+    C --> D[Ticket efêmero de uso único]
+    D --> E[WebSocket /ws/realtime]
+    B --> F[Criação/Edição/Exclusão de Transaction]
+    F --> G[FinancialService]
+    G --> H[Commit no banco]
+    H --> I[TransactionChangedEvent]
+    I --> J[Usuários autorizados da carteira]
+    J --> E
+    E --> K[React atualiza Transações e Dashboard]
 ```
+
+No frontend, `VITE_WS_BASE_URL` é opcional. Quando não configurada, a URL WebSocket é derivada automaticamente de `VITE_API_BASE_URL` (`http` → `ws` e `https` → `wss`).
 
 ---
 
@@ -216,8 +225,8 @@ flowchart TD
 | **Sprint 2** |   ✅   | Domínio Base: Usuários, Perfis, Configurações de Security                |
 | **Sprint 3** |   ✅   | Core Financeiro: Transações, Carteiras, Membros, Estornos e Recálculos   |
 | **Sprint 4** |   ✅   | CQRS Básico (Leitura): Dashboard, Extratos, Categorização, Indicadores   |
-| **Sprint 5** |   ⏳   | Segurança Avançada: Login real (Autenticação JWT), Proteção de Endpoints |
-| **Sprint 6** |   ⏳   | Assinaturas, Limites, Testes Finais de Integração                        |
+| **Sprint 5** |   ✅   | Segurança: Login JWT, proteção de endpoints e autorização por carteira   |
+| **Sprint 6** |   🟡   | Tempo real via WebSocket, integração e testes                            |
 | **Sprint 7** |   ⏳   | Notificações, Gamificação e Metas                                        |
 
 ---
@@ -229,3 +238,25 @@ flowchart TD
 - **ApiResponse**: Todo output da API tem o mesmo formato unificado (`success`, `message`, `data`).
 - **GlobalExceptionHandler**: Tratamento global de falhas capturando `IllegalArgumentException`, `ResourceNotFoundException` e padronizando os erros do `jakarta.validation`.
 - **Clean Code & SOLID**: As lógicas financeiras mais pesadas estão segregadas no `FinancialService`, enquanto as leituras foram movidas para `FinancialReportService`, removendo as regras do banco dos Controllers.
+
+---
+
+## Como testar o tempo real
+
+1. Inicie backend e frontend normalmente.
+2. Crie dois usuários e compartilhe uma carteira entre eles.
+3. Abra o sistema em duas sessões separadas do navegador (por exemplo, janela normal e anônima) e faça login com um usuário em cada sessão.
+4. Nos dois usuários, abra o Dashboard ou a tela de Transações da carteira compartilhada.
+5. Em uma das sessões com permissão `OWNER` ou `EDITOR`, crie, edite ou exclua uma transação.
+6. A outra sessão deve atualizar os dados automaticamente, sem recarregar a página. Na tela de Transações, alterações feitas por outro usuário também exibem uma notificação informativa.
+
+O fluxo usado é:
+
+```text
+JWT autenticado -> POST /api/realtime/ticket -> ticket único (30s)
+-> WebSocket /ws/realtime?ticket=...
+-> transação confirmada no banco
+-> TransactionChangedEvent AFTER_COMMIT
+-> evento enviado apenas ao OWNER e membros das carteiras afetadas
+-> React atualiza Dashboard/Transações
+```

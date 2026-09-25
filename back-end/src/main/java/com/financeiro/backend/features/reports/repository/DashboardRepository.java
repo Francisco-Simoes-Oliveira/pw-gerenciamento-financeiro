@@ -16,25 +16,35 @@ import com.financeiro.backend.features.transaction.entity.Transaction;
 public interface DashboardRepository extends JpaRepository<Transaction, UUID> {
 
     @Query("""
-        SELECT 
+        SELECT
             SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE 0 END) as income,
             SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END) as expense,
             SUM(CASE WHEN t.type = 'TRANSFER' THEN t.amount ELSE 0 END) as transfer,
             COUNT(t.id) as transactionsCount
-        FROM Transaction t 
-        WHERE t.createdBy.id = :userId 
+        FROM Transaction t
+        WHERE (
+            t.wallet.owner.id = :userId
+            OR EXISTS (
+                SELECT wm.id
+                FROM WalletMember wm
+                WHERE wm.wallet.id = t.wallet.id
+                AND wm.user.id = :userId
+            )
+        )
         AND (:walletId IS NULL OR t.wallet.id = :walletId)
     """)
     DashboardProjection getDashboardConsolidated(@Param("userId") UUID userId, @Param("walletId") UUID walletId);
 
     @Query(value = """
-        SELECT 
+        SELECT
             YEAR(t.created_at) as year,
             MONTH(t.created_at) as month,
             SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE 0 END) as income,
             SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END) as expense
-        FROM transaction t 
-        WHERE t.created_by = :userId 
+        FROM transaction t
+        JOIN wallet w ON w.id = t.wallet_id
+        LEFT JOIN wallet_member wm ON wm.wallet_id = w.id AND wm.user_id = :userId
+        WHERE (w.owner_id = :userId OR wm.user_id = :userId)
         AND (:walletId IS NULL OR t.wallet_id = :walletId)
         GROUP BY YEAR(t.created_at), MONTH(t.created_at)
         ORDER BY year DESC, month DESC

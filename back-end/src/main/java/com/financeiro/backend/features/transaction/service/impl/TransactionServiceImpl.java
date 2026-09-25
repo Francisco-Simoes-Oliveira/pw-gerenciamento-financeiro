@@ -1,10 +1,13 @@
 package com.financeiro.backend.features.transaction.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +19,8 @@ import com.financeiro.backend.features.category.entity.Category;
 import com.financeiro.backend.features.category.enums.CategoryType;
 import com.financeiro.backend.features.category.repository.CategoryRepository;
 import com.financeiro.backend.features.finance.service.FinancialService;
+import com.financeiro.backend.features.realtime.event.TransactionChangedEvent;
+import com.financeiro.backend.features.realtime.event.TransactionChangedEvent.ChangeType;
 import com.financeiro.backend.features.transaction.dto.request.CreateTransactionRequest;
 import com.financeiro.backend.features.transaction.dto.request.UpdateTransactionRequest;
 import com.financeiro.backend.features.transaction.dto.response.TransactionResponse;
@@ -52,6 +57,9 @@ public class TransactionServiceImpl implements TransactionService {
     @Autowired
     private WalletAccessService walletAccessService;
 
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
+
     @Override
     @Transactional
     public TransactionResponse insert(UUID currentUserId, CreateTransactionRequest request) {
@@ -76,6 +84,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         Transaction saved = repository.save(transaction);
         applyFinancialImpact(saved, createdBy);
+        publishTransactionChange(ChangeType.CREATED, saved, currentUserId);
 
         return mapper.toResponse(saved);
     }
@@ -136,6 +145,12 @@ public class TransactionServiceImpl implements TransactionService {
         User updater = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
         financialService.updateTransaction(oldTransactionSnapshot, updated, updater);
+        publishTransactionChange(
+                ChangeType.UPDATED,
+                updated,
+                currentUserId,
+                oldTransactionSnapshot.getDestinationWallet()
+        );
 
         return mapper.toResponse(updated);
     }
@@ -155,6 +170,38 @@ public class TransactionServiceImpl implements TransactionService {
 
         financialService.deleteTransaction(transaction, user);
         repository.delete(transaction);
+        publishTransactionChange(ChangeType.DELETED, transaction, currentUserId);
+    }
+
+    private void publishTransactionChange(
+            ChangeType type,
+            Transaction transaction,
+            UUID currentUserId,
+            Wallet... additionalWallets
+    ) {
+        Set<UUID> walletIds = new HashSet<>();
+        addWalletId(walletIds, transaction.getWallet());
+        addWalletId(walletIds, transaction.getDestinationWallet());
+
+        if (additionalWallets != null) {
+            for (Wallet wallet : additionalWallets) {
+                addWalletId(walletIds, wallet);
+            }
+        }
+
+        eventPublisher.publishEvent(new TransactionChangedEvent(
+                type,
+                transaction.getId(),
+                walletIds,
+                currentUserId,
+                LocalDateTime.now()
+        ));
+    }
+
+    private void addWalletId(Set<UUID> walletIds, Wallet wallet) {
+        if (wallet != null && wallet.getId() != null) {
+            walletIds.add(wallet.getId());
+        }
     }
 
     private Wallet resolveDestinationWalletForCreate(

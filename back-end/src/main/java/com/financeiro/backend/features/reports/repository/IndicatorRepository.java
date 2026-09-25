@@ -14,13 +14,21 @@ import com.financeiro.backend.features.transaction.entity.Transaction;
 public interface IndicatorRepository extends JpaRepository<Transaction, UUID> {
 
     @Query("""
-        SELECT 
+        SELECT
             MAX(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE 0 END) as maxIncome,
             MAX(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END) as maxExpense,
             COUNT(t.id) as transactionCount,
             COUNT(DISTINCT t.category.id) as categoryCount
-        FROM Transaction t 
-        WHERE t.createdBy.id = :userId 
+        FROM Transaction t
+        WHERE (
+            t.wallet.owner.id = :userId
+            OR EXISTS (
+                SELECT wm.id
+                FROM WalletMember wm
+                WHERE wm.wallet.id = t.wallet.id
+                AND wm.user.id = :userId
+            )
+        )
         AND (:walletId IS NULL OR t.wallet.id = :walletId)
     """)
     IndicatorProjection getIndicators(@Param("userId") UUID userId, @Param("walletId") UUID walletId);

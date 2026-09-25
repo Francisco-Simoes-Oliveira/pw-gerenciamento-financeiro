@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import {
   Wallet,
@@ -20,6 +20,7 @@ import LevelCard from "@/components/shared/LevelCard"
 import dashboardService from "@/services/dashboardService"
 import walletService from "@/services/walletService"
 import { toast } from "sonner"
+import useRealtimeEvents from "@/hooks/useRealtimeEvents"
 
 export default function Dashboard() {
   const [summary, setSummary] = useState({
@@ -35,54 +36,62 @@ export default function Dashboard() {
   
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true)
-        
-        // Fetch real API data
-        const summaryRes = await dashboardService.getDashboardSummary()
-        if (summaryRes.data?.success) {
-          setSummary(summaryRes.data.data)
-        }
+  const loadData = useCallback(async ({ showLoading = true, showError = true } = {}) => {
+    try {
+      if (showLoading) setLoading(true)
 
-        const monthlyRes = await dashboardService.getMonthly()
-        if (monthlyRes.data?.success) {
-          setChartData((monthlyRes.data.data || []).map((item) => ({
-            name: item.month,
-            Receitas: Number(item.income || 0),
-            Despesas: Number(item.expense || 0),
-          })))
-        }
+      const [summaryRes, monthlyRes, categoryRes, statementRes, walletsRes] = await Promise.all([
+        dashboardService.getDashboardSummary(),
+        dashboardService.getMonthly(),
+        dashboardService.getExpensesByCategory(),
+        dashboardService.getStatement({ page: 0, size: 5 }),
+        walletService.getWallets(),
+      ])
 
-        const categoryRes = await dashboardService.getExpensesByCategory()
-        if (categoryRes.data?.success) {
-          setCategoryData((categoryRes.data.data || []).map((item, index) => ({
-            name: item.category,
-            value: item.percentage || 0,
-            color: ["#1E3A8A", "#B91C1C", "#059669", "#D97706"][index % 4],
-          })))
-        }
-
-        const statementRes = await dashboardService.getStatement({ page: 0, size: 5 })
-        if (statementRes.data?.success) {
-          setTransactions(statementRes.data.data.content || [])
-        }
-
-        const walletsRes = await walletService.getWallets()
-        if (walletsRes.data?.success) {
-          setSharedWallets(walletsRes.data.data || [])
-        }
-
-      } catch (error) {
-        console.error("Dashboard error:", error)
-        toast.error("Erro ao carregar dados do dashboard.")
-      } finally {
-        setLoading(false)
+      if (summaryRes.data?.success) {
+        setSummary(summaryRes.data.data)
       }
+
+      if (monthlyRes.data?.success) {
+        setChartData((monthlyRes.data.data || []).map((item) => ({
+          name: item.month,
+          Receitas: Number(item.income || 0),
+          Despesas: Number(item.expense || 0),
+        })))
+      }
+
+      if (categoryRes.data?.success) {
+        setCategoryData((categoryRes.data.data || []).map((item, index) => ({
+          name: item.category,
+          value: item.percentage || 0,
+          color: ["#1E3A8A", "#B91C1C", "#059669", "#D97706"][index % 4],
+        })))
+      }
+
+      if (statementRes.data?.success) {
+        setTransactions(statementRes.data.data.content || [])
+      }
+
+      if (walletsRes.data?.success) {
+        setSharedWallets(walletsRes.data.data || [])
+      }
+    } catch (error) {
+      console.error("Dashboard error:", error)
+      if (showError) toast.error("Erro ao carregar dados do dashboard.")
+    } finally {
+      if (showLoading) setLoading(false)
     }
-    loadData()
   }, [])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  useRealtimeEvents((event) => {
+    if (event?.type?.startsWith("TRANSACTION_")) {
+      loadData({ showLoading: false, showError: false })
+    }
+  })
 
   // Mock Date Greeting
   const today = new Date("2026-06-22T00:00:00")

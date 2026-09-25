@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 
 import com.financeiro.backend.features.auth.entity.User;
@@ -26,6 +27,7 @@ import com.financeiro.backend.features.category.entity.Category;
 import com.financeiro.backend.features.category.enums.CategoryType;
 import com.financeiro.backend.features.category.repository.CategoryRepository;
 import com.financeiro.backend.features.finance.service.FinancialService;
+import com.financeiro.backend.features.realtime.event.TransactionChangedEvent;
 import com.financeiro.backend.features.transaction.dto.request.CreateTransactionRequest;
 import com.financeiro.backend.features.transaction.dto.response.TransactionResponse;
 import com.financeiro.backend.features.transaction.entity.Transaction;
@@ -59,6 +61,9 @@ class TransactionServiceImplTest {
 
     @Mock
     private WalletAccessService walletAccessService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private TransactionServiceImpl transactionService;
@@ -173,6 +178,7 @@ class TransactionServiceImplTest {
 
         verify(walletAccessService).requireTransactionEdit(wallet, owner.getId());
         verify(financialService, times(1)).applyIncome(wallet, tx, owner);
+        verify(eventPublisher, times(1)).publishEvent((Object) any(TransactionChangedEvent.class));
     }
 
     @Test
@@ -192,5 +198,6 @@ class TransactionServiceImplTest {
         verify(walletAccessService).requireTransactionEdit(wallet, owner.getId());
         verify(financialService, times(1)).deleteTransaction(tx, owner);
         verify(repository, times(1)).delete(tx);
+        verify(eventPublisher, times(1)).publishEvent((Object) any(TransactionChangedEvent.class));
     }
 }

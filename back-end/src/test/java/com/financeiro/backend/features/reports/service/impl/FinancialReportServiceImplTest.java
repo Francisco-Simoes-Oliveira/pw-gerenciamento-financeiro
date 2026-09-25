@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,9 @@ import com.financeiro.backend.features.reports.repository.DashboardRepository;
 import com.financeiro.backend.features.reports.repository.IndicatorRepository;
 import com.financeiro.backend.features.reports.repository.StatementRepository;
 import com.financeiro.backend.features.transaction.entity.Transaction;
+import com.financeiro.backend.features.wallet.entity.Wallet;
+import com.financeiro.backend.features.wallet.repository.WalletRepository;
+import com.financeiro.backend.features.wallet.service.WalletAccessService;
 
 @ExtendWith(MockitoExtension.class)
 class FinancialReportServiceImplTest {
@@ -47,6 +51,12 @@ class FinancialReportServiceImplTest {
     
     @Mock
     private CategoryReportRepository categoryReportRepository;
+
+    @Mock
+    private WalletRepository walletRepository;
+
+    @Mock
+    private WalletAccessService walletAccessService;
 
     @InjectMocks
     private FinancialReportServiceImpl reportService;
@@ -103,4 +113,19 @@ class FinancialReportServiceImplTest {
         
         verify(statementRepository, times(1)).findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable));
     }
+    @Test
+    void testDashboardWithWalletFilter_ValidatesWalletAccess() {
+        UUID walletId = UUID.randomUUID();
+        filter.setWalletId(walletId);
+        Wallet wallet = Wallet.builder().id(walletId).build();
+
+        when(walletRepository.findById(walletId)).thenReturn(Optional.of(wallet));
+        when(dashboardRepository.getDashboardConsolidated(userId, walletId)).thenReturn(null);
+
+        reportService.getDashboardSummary(filter, userId);
+
+        verify(walletAccessService).requireView(wallet, userId);
+        verify(dashboardRepository).getDashboardConsolidated(userId, walletId);
+    }
+
 }

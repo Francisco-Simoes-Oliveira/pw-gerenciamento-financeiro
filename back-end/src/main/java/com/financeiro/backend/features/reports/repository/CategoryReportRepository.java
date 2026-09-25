@@ -15,12 +15,20 @@ import com.financeiro.backend.features.transaction.entity.Transaction;
 public interface CategoryReportRepository extends JpaRepository<Transaction, UUID> {
 
     @Query("""
-        SELECT 
+        SELECT
             c.name as categoryName,
             SUM(t.amount) as total
-        FROM Transaction t 
+        FROM Transaction t
         JOIN t.category c
-        WHERE t.createdBy.id = :userId 
+        WHERE (
+            t.wallet.owner.id = :userId
+            OR EXISTS (
+                SELECT wm.id
+                FROM WalletMember wm
+                WHERE wm.wallet.id = t.wallet.id
+                AND wm.user.id = :userId
+            )
+        )
         AND t.type = 'EXPENSE'
         AND (:walletId IS NULL OR t.wallet.id = :walletId)
         GROUP BY c.id, c.name

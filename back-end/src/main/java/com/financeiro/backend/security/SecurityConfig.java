@@ -66,6 +66,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> 
                 auth.requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/api/users").permitAll() // Para permitir cadastro
+                    // O handshake WebSocket usa um ticket efêmero emitido por uma rota autenticada.
+                    .requestMatchers("/ws/realtime").permitAll()
                     .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                     .anyRequest().authenticated()
             );

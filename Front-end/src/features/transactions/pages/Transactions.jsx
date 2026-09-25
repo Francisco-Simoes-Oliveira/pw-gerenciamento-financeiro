@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import transactionService from "@/services/transactionService"
 import walletService from "@/services/walletService"
 import categoryService from "@/services/categoryService"
+import useRealtimeEvents from "@/hooks/useRealtimeEvents"
 
 const transactionSchema = z.object({
   walletId: z.string().uuid("Selecione uma carteira"),
@@ -105,9 +106,9 @@ export default function Transactions() {
     }
   }
 
-  const loadTransactions = async (walletId) => {
+  const loadTransactions = async (walletId, { showLoading = true } = {}) => {
     try {
-      setLoading(true)
+      if (showLoading) setLoading(true)
       const res = await transactionService.listTransactions({ walletId })
       if (res.data?.success) {
         setTransactions(Array.isArray(res.data.data) ? res.data.data : [])
@@ -116,9 +117,20 @@ export default function Transactions() {
       console.error(error)
       toast.error("Erro ao carregar transações.")
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
+
+  useRealtimeEvents((event) => {
+    if (!event?.type?.startsWith("TRANSACTION_") || !selectedWalletId) return
+    if (!Array.isArray(event.walletIds) || !event.walletIds.includes(selectedWalletId)) return
+
+    loadTransactions(selectedWalletId, { showLoading: false })
+
+    if (event.changedByUserId && event.changedByUserId !== ownerId) {
+      toast.info("Carteira atualizada em tempo real por outro membro.")
+    }
+  })
 
   const handleWalletChange = (e) => {
     const wId = e.target.value

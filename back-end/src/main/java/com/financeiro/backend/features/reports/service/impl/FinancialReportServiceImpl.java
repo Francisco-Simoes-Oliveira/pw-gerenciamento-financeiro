@@ -30,6 +30,10 @@ import com.financeiro.backend.features.reports.repository.StatementRepository;
 import com.financeiro.backend.features.reports.service.FinancialReportService;
 import com.financeiro.backend.features.reports.specification.TransactionSpecification;
 import com.financeiro.backend.features.transaction.entity.Transaction;
+import com.financeiro.backend.features.wallet.entity.Wallet;
+import com.financeiro.backend.features.wallet.repository.WalletRepository;
+import com.financeiro.backend.features.wallet.service.WalletAccessService;
+import com.financeiro.backend.common.exception.ResourceNotFoundException;
 
 @Service
 public class FinancialReportServiceImpl implements FinancialReportService {
@@ -46,6 +50,12 @@ public class FinancialReportServiceImpl implements FinancialReportService {
     @Autowired
     private CategoryReportRepository categoryReportRepository;
 
+    @Autowired
+    private WalletRepository walletRepository;
+
+    @Autowired
+    private WalletAccessService walletAccessService;
+
     private BigDecimal zeroIfNull(BigDecimal val) {
         return val == null ? BigDecimal.ZERO : val.setScale(2, RoundingMode.HALF_EVEN);
     }
@@ -53,6 +63,7 @@ public class FinancialReportServiceImpl implements FinancialReportService {
     @Override
     @Cacheable(value = "dashboard", key = "#currentUserId + '_' + (#filter.walletId != null ? #filter.walletId : 'ALL')")
     public DashboardSummaryResponse getDashboardSummary(ReportFilter filter, UUID currentUserId) {
+        validateWalletFilter(filter, currentUserId);
         DashboardProjection proj = dashboardRepository.getDashboardConsolidated(currentUserId, filter.getWalletId());
         
         if (proj == null) {
@@ -79,6 +90,7 @@ public class FinancialReportServiceImpl implements FinancialReportService {
     @Override
     @Cacheable(value = "monthly", key = "#currentUserId + '_' + (#filter.walletId != null ? #filter.walletId : 'ALL')")
     public List<MonthlyBalanceResponse> getMonthlyBalance(ReportFilter filter, UUID currentUserId) {
+        validateWalletFilter(filter, currentUserId);
         List<MonthlyProjection> projs = dashboardRepository.getMonthlyBalance(currentUserId, filter.getWalletId());
         
         return projs.stream().map(p -> {
@@ -96,6 +108,7 @@ public class FinancialReportServiceImpl implements FinancialReportService {
     @Override
     @Cacheable(value = "categories", key = "#currentUserId + '_' + (#filter.walletId != null ? #filter.walletId : 'ALL')")
     public List<CategoryExpenseResponse> getExpensesByCategory(ReportFilter filter, UUID currentUserId) {
+        validateWalletFilter(filter, currentUserId);
         var projs = categoryReportRepository.getExpensesByCategory(currentUserId, filter.getWalletId());
         
         BigDecimal totalExpenses = projs.stream()
@@ -116,18 +129,21 @@ public class FinancialReportServiceImpl implements FinancialReportService {
 
     @Override
     public List<BalanceHistoryResponse> getBalanceHistory(ReportFilter filter, UUID currentUserId) {
+        validateWalletFilter(filter, currentUserId);
         // Will be implemented later with CashFlow projections, returning empty list for now
         return List.of();
     }
 
     @Override
     public List<CashFlowResponse> getCashFlow(ReportFilter filter, UUID currentUserId) {
+        validateWalletFilter(filter, currentUserId);
         // Will be implemented later with CashFlow projections, returning empty list for now
         return List.of();
     }
 
     @Override
     public Page<StatementResponse> getStatement(ReportFilter filter, Pageable pageable, UUID currentUserId) {
+        validateWalletFilter(filter, currentUserId);
         Page<Transaction> page = statementRepository.findAll(TransactionSpecification.withFilter(filter, currentUserId), pageable);
         
         return page.map(t -> StatementResponse.builder()
@@ -151,6 +167,7 @@ public class FinancialReportServiceImpl implements FinancialReportService {
     @Override
     @Cacheable(value = "indicators", key = "#currentUserId + '_' + (#filter.walletId != null ? #filter.walletId : 'ALL')")
     public IndicatorsResponse getIndicators(ReportFilter filter, UUID currentUserId) {
+        validateWalletFilter(filter, currentUserId);
         IndicatorProjection proj = indicatorRepository.getIndicators(currentUserId, filter.getWalletId());
         if (proj == null) {
             return new IndicatorsResponse(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, 0L, BigDecimal.ZERO, null, null);
@@ -162,4 +179,17 @@ public class FinancialReportServiceImpl implements FinancialReportService {
                 .transactionCount(proj.getTransactionCount() == null ? 0 : proj.getTransactionCount())
                 .build();
     }
+
+    private void validateWalletFilter(ReportFilter filter, UUID currentUserId) {
+        if (filter == null || filter.getWalletId() == null) {
+            return;
+        }
+
+        Wallet wallet = walletRepository.findById(filter.getWalletId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Carteira não encontrada com ID: " + filter.getWalletId()
+                ));
+        walletAccessService.requireView(wallet, currentUserId);
+    }
+
 }
