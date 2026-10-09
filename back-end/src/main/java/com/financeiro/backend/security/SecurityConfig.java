@@ -1,6 +1,7 @@
 package com.financeiro.backend.security;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.financeiro.backend.security.jwt.AuthTokenFilter;
+import com.financeiro.backend.security.ratelimit.RateLimitFilter;
+import com.financeiro.backend.security.ratelimit.RateLimitService;
 import com.financeiro.backend.security.services.UserDetailsServiceImpl;
 
 @Configuration
@@ -27,6 +30,19 @@ public class SecurityConfig {
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
         return new AuthTokenFilter();
+    }
+
+    @Bean
+    public RateLimitFilter rateLimitFilter(RateLimitService service) {
+        return new RateLimitFilter(service);
+    }
+
+    // The filter must run only inside Spring Security, after the JWT filter.
+    @Bean
+    public FilterRegistrationBean<RateLimitFilter> rateLimitFilterRegistration(RateLimitFilter filter) {
+        var registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
@@ -59,7 +75,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, RateLimitFilter rateLimitFilter) throws Exception {
         http.cors(org.springframework.security.config.Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -74,6 +90,7 @@ public class SecurityConfig {
 
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(rateLimitFilter, AuthTokenFilter.class);
 
         return http.build();
     }

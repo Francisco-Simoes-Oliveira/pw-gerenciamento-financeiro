@@ -292,6 +292,34 @@ Edite um lançamento com OWNER/EDITOR em outra sessão e confirme a atualizaçã
 A [auditoria do módulo](back-end/docs/reports-audit.md) documenta o que existia e os limites dos endpoints antigos.
 Histórico de saldo e fluxo de caixa ainda são placeholders; o novo extrato não depende deles.
 
+## Limite de tentativas em rotas sensíveis
+
+O backend aplica limites por janela fixa, iniciada na primeira tentativa de cada rota e identidade:
+
+| Rota real (`POST`) | Limite | Identidade |
+| --- | ---: | --- |
+| `/api/auth/login` | 5 por minuto | IP |
+| `/api/auth/password-reset/request` | 3 por 10 minutos | IP |
+| `/api/auth/password-reset/confirm` | 5 por 10 minutos | IP |
+| `/api/users` (cadastro) | 5 por hora | IP |
+| `/api/realtime/ticket` | 30 por minuto | usuário autenticado |
+
+As tentativas são contadas antes da execução do endpoint, independentemente do resultado
+(inclusive senha inválida e dados malformados). Rotas e métodos não listados não consomem limite.
+Um ticket sem autenticação mantém o fluxo normal de `401`; o limite por usuário é verificado
+após a leitura do JWT. Ao exceder a cota, a resposta é `429 Too Many Requests`, no formato
+`ApiResponse` (`success: false`, `message`, `data: null`), com `Retry-After` em segundos e
+`Cache-Control: no-store`. A janela volta a permitir tentativas automaticamente após expirar.
+
+O contador fica em memória e é compartilhado apenas dentro de **uma instância** do backend.
+Para implantação com múltiplas instâncias, é necessário armazenamento compartilhado, como Redis,
+e uma operação atômica para consumir a cota. Para rotas públicas, a identidade é o endereço remoto
+fornecido pela conexão; cabeçalhos `X-Forwarded-For` enviados pelo cliente não são aceitos.
+Se houver proxy reverso, configure nele a interpretação de cabeçalhos **somente de proxies confiáveis**.
+
+Execute `cd back-end && ./mvnw test` para validar limites, isolamento entre IPs/usuários,
+expiração, concorrência, resposta 429 e preservação das rotas normais.
+
 ## Como testar o tempo real
 
 1. Inicie backend e frontend normalmente.
