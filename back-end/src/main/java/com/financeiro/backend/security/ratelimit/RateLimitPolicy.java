@@ -8,7 +8,8 @@ public enum RateLimitPolicy {
     PASSWORD_RESET_REQUEST("/api/auth/password-reset/request", 3, Duration.ofMinutes(10), false),
     PASSWORD_RESET_CONFIRM("/api/auth/password-reset/confirm", 5, Duration.ofMinutes(10), false),
     REGISTER("/api/users", 5, Duration.ofHours(1), false),
-    REALTIME_TICKET("/api/realtime/ticket", 30, Duration.ofMinutes(1), true);
+    REALTIME_TICKET("/api/realtime/ticket", 30, Duration.ofMinutes(1), true),
+    AI_INSIGHTS("/api/ai/insights", 5, Duration.ofMinutes(1), true);
 
     private final String path;
     private final int limit;

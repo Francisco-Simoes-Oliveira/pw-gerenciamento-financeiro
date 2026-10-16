@@ -5,6 +5,7 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -82,6 +83,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> 
                 auth.requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/api/users").permitAll() // Para permitir cadastro
+                    // O EventSource autentica com ticket aleatório de uso único, nunca com JWT na URL.
+                    .requestMatchers(HttpMethod.GET, "/api/ai/insights/*/stream").permitAll()
                     // O handshake WebSocket usa um ticket efêmero emitido por uma rota autenticada.
                     .requestMatchers("/ws/realtime").permitAll()
                     .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
