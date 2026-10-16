@@ -15,6 +15,12 @@ import java.util.stream.Collectors;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(com.financeiro.backend.features.intelligence.exception.InvalidInsightTicketException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidInsightTicket(
+            com.financeiro.backend.features.intelligence.exception.InvalidInsightTicketException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler({org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class,
             org.springframework.web.bind.MissingServletRequestParameterException.class})
     public ResponseEntity<ApiResponse<Void>> handleInvalidParameter(Exception ex) {
