@@ -58,6 +58,12 @@ api.interceptors.response.use(
         case 422:
           toast.error(`Erro de validação: ${message}`);
           break;
+        case 429: {
+          const retryAfter = Number(error.response.headers?.['retry-after']);
+          const wait = Number.isFinite(retryAfter) ? ` Aguarde ${retryAfter}s.` : '';
+          toast.error(`${message}${wait}`);
+          break;
+        }
         case 500:
           toast.error('Erro interno do servidor. Tente novamente mais tarde.');
           break;

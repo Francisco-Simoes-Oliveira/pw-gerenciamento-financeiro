@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Download, FileText, RefreshCw } from 'lucide-react'
+import { CheckCircle2, Download, FileText, LoaderCircle, RefreshCw, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import walletService from '@/services/walletService'
 import { downloadStatement, getStatementReport } from '@/services/reportService'
+import { startFinancialInsight, streamFinancialInsight } from '@/services/insightService'
 import useRealtimeEvents from '@/hooks/useRealtimeEvents'
 
 const movement = { INCOME: 'Receita', EXPENSE: 'Despesa', TRANSFER_IN: 'Transferência recebida', TRANSFER_OUT: 'Transferência enviada' }
@@ -31,6 +32,11 @@ export default function Reports() {
   const [revision, setRevision] = useState(0)
   const [page, setPage] = useState(0)
   const requestId = useRef(0)
+  const insightStream = useRef(null)
+  const [insight, setInsight] = useState(null)
+  const [insightProgress, setInsightProgress] = useState([])
+  const [insightLoading, setInsightLoading] = useState(false)
+  const [insightError, setInsightError] = useState('')
 
   useEffect(() => {
     let active = true
@@ -47,6 +53,8 @@ export default function Reports() {
       .finally(() => { if (active) setWalletsLoading(false) })
     return () => { active = false }
   }, [])
+
+  useEffect(() => () => insightStream.current?.(), [])
 
   useEffect(() => {
     if (!applied) return
@@ -67,6 +75,15 @@ export default function Reports() {
       if (!controller.signal.aborted && id === requestId.current) setLoading(false)
     })
     return () => controller.abort()
+  }, [applied, revision])
+
+  useEffect(() => {
+    insightStream.current?.()
+    insightStream.current = null
+    setInsight(null)
+    setInsightProgress([])
+    setInsightLoading(false)
+    setInsightError('')
   }, [applied, revision])
 
   useRealtimeEvents((event) => {
@@ -97,6 +114,37 @@ export default function Reports() {
       }
       setExportError(message)
     } finally { setExporting('') }
+  }
+
+  async function analyze() {
+    if (!applied || dirty || insightLoading) return
+    insightStream.current?.()
+    insightStream.current = null
+    setInsight(null)
+    setInsightProgress([])
+    setInsightError('')
+    setInsightLoading(true)
+    try {
+      const start = await startFinancialInsight(applied)
+      insightStream.current = streamFinancialInsight(start, {
+        onProgress(progress) {
+          setInsightProgress((items) => items.some((item) => item.step === progress.step) ? items : [...items, progress])
+        },
+        onComplete(result) {
+          setInsight(result)
+          setInsightLoading(false)
+          insightStream.current = null
+        },
+        onError(message) {
+          setInsightError(message || 'Não foi possível concluir a análise.')
+          setInsightLoading(false)
+          insightStream.current = null
+        },
+      })
+    } catch (err) {
+      setInsightError(err.response?.data?.message || 'Não foi possível iniciar a análise.')
+      setInsightLoading(false)
+    }
   }
 
   const dirty = applied && Object.keys(filters).some((key) => filters[key] !== applied[key])
@@ -158,6 +206,46 @@ export default function Reports() {
         </div>
         <p className="text-sm text-muted-foreground">Totais de lançamentos pagos, pela data da transação. Pendentes: {report.pendingCount}; cancelados: {report.canceledCount}.
           {' '}A variação do período não inclui saldo inicial e pode diferir do saldo atual da carteira. Os arquivos contêm todos os lançamentos do filtro, não apenas esta página.</p>
+        <section aria-labelledby="smart-summary-title" className="overflow-hidden rounded-xl border bg-card">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b bg-gradient-to-r from-primary/10 via-card to-card p-5">
+            <div className="max-w-2xl">
+              <h2 id="smart-summary-title" className="flex items-center gap-2 text-lg font-semibold"><Sparkles className="text-primary" size={20} aria-hidden="true" /> Resumo Inteligente</h2>
+              <p className="mt-1 text-sm text-muted-foreground">A IA compara os totais e categorias deste período com o período anterior equivalente. Somente dados agregados são enviados.</p>
+            </div>
+            <Button type="button" onClick={analyze} disabled={insightLoading || !!dirty}>
+              {insightLoading ? <LoaderCircle className="animate-spin" size={16} aria-hidden="true" /> : <Sparkles size={16} aria-hidden="true" />}
+              {insightLoading ? 'Analisando…' : insight ? 'Analisar novamente' : 'Analisar minhas finanças'}
+            </Button>
+          </div>
+          <div className="space-y-5 p-5">
+            {dirty && <p className="text-sm text-muted-foreground">Aplique os filtros alterados antes de iniciar uma análise.</p>}
+            {!!insightProgress.length && <ol aria-label="Progresso da análise" className="grid gap-2 sm:grid-cols-3">
+              {insightProgress.map((item, index) => <li key={item.step} className="flex items-start gap-2 rounded-lg bg-muted/60 p-3 text-sm">
+                {insightLoading && index === insightProgress.length - 1
+                  ? <LoaderCircle className="mt-0.5 shrink-0 animate-spin text-primary" size={17} aria-hidden="true" />
+                  : <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={17} aria-hidden="true" />}
+                <span>{item.message}</span>
+              </li>)}
+            </ol>}
+            {insightError && <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{insightError}</p>}
+            {insight && <div className="space-y-5" aria-live="polite">
+              <div>
+                <h3 className="font-semibold">Resumo do período</h3>
+                <p className="mt-2 leading-relaxed text-foreground/90">{insight.summary}</p>
+              </div>
+              {!!insight.highlights?.length && <div>
+                <h3 className="font-semibold">Destaques</h3>
+                <ul className="mt-2 space-y-2">{insight.highlights.map((item, index) => <li key={index} className="flex gap-2"><span aria-hidden="true" className="text-primary">•</span><span>{item}</span></li>)}</ul>
+              </div>}
+              {!!insight.recommendations?.length && <div>
+                <h3 className="font-semibold">Recomendações</h3>
+                <ul className="mt-2 space-y-2">{insight.recommendations.map((item, index) => <li key={index} className="flex gap-2"><span aria-hidden="true" className="text-primary">•</span><span>{item}</span></li>)}</ul>
+              </div>}
+              <p className="border-t pt-4 text-xs text-muted-foreground">{insight.disclaimer}</p>
+            </div>}
+            {!insightLoading && !insight && !insightError && <p className="text-sm text-muted-foreground">Inicie a análise para receber destaques e recomendações sobre o período consultado.</p>}
+          </div>
+        </section>
         <div className="overflow-x-auto rounded-xl border bg-card">
           <table className="w-full text-left text-sm">
             <caption className="sr-only">Lançamentos do extrato de {report.walletName}</caption>

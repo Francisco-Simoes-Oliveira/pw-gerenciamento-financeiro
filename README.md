@@ -15,6 +15,8 @@ A aplicação é construída utilizando as seguintes tecnologias e frameworks:
 - **Spring Data JPA & Hibernate**
 - **Spring Security & OAuth2 Resource Server**
 - **Spring WebSocket** (atualização de transações em tempo real)
+- **Server-Sent Events (SSE)** (progresso e resultado do Resumo Inteligente)
+- **Google Gemini API** (análise de dados financeiros agregados)
 - **MariaDB** (Produção/Desenvolvimento)
 - **H2 Database** (Ambiente de Testes)
 - **Maven**
@@ -49,6 +51,7 @@ src/main/java
         ├── subscription(Plans e UserSubscription)
         ├── reports     (Queries, Projections, Dashboards)
         ├── realtime    (WebSocket, tickets efêmeros e eventos pós-commit)
+        ├── intelligence(Gemini, dados agregados, tickets efêmeros e SSE)
         └── finance     (Engine de processamento de saldos)
 ```
 
@@ -64,6 +67,7 @@ src/main/java
 - **Reports**: Módulo exclusivamente de leitura otimizado (Dashboards, Extratos com paginação, Fluxo de Caixa). Separado da camada de transação.
 - **Finance**: Core contábil interno (não exposto em Controller). Garante a consistência dos saldos das carteiras recalculando e aplicando estornos caso uma transação seja editada ou excluída.
 - **Realtime**: Emite eventos somente após o commit das transações e atualiza clientes conectados por WebSocket. O handshake usa um ticket efêmero, de uso único, emitido por uma rota protegida por JWT; o token JWT não é enviado na URL do WebSocket.
+- **Intelligence**: Gera o Resumo Inteligente de uma carteira autorizada. Reutiliza o extrato consolidado, envia somente totais e categorias ao Gemini e publica progresso e resultado por SSE.
 
 ---
 
@@ -100,6 +104,7 @@ erDiagram
 ✅ Extratos com Filtros (Specifications)  
 ✅ Indicadores Analíticos  
 ✅ Atualização de transações e dashboard em tempo real via WebSocket  
+✅ Resumo Inteligente com Gemini e progresso em tempo real via SSE<br>
 ✅ Documentação Swagger (OpenAPI)  
 ✅ Testes Unitários e Cobertura (JUnit + Mockito)
 
@@ -292,6 +297,62 @@ Edite um lançamento com OWNER/EDITOR em outra sessão e confirme a atualizaçã
 A [auditoria do módulo](back-end/docs/reports-audit.md) documenta o que existia e os limites dos endpoints antigos.
 Histórico de saldo e fluxo de caixa ainda são placeholders; o novo extrato não depende deles.
 
+## Resumo Inteligente com Gemini e SSE
+
+Na página **Relatórios**, consulte uma carteira e um período e clique em **Analisar minhas finanças**.
+OWNER, EDITOR e VIEWER podem analisar apenas as carteiras que já podem visualizar. A autorização é
+verificada ao criar a análise e novamente ao montar os dados, cobrindo uma revogação de acesso entre
+as duas etapas.
+
+Configure o backend por variável de ambiente antes de iniciá-lo:
+
+```powershell
+$env:GEMINI_API_KEY="sua-chave"
+$env:GEMINI_MODEL="gemini-3.8-flash" # opcional
+.\mvnw.cmd spring-boot:run
+```
+
+```bash
+export GEMINI_API_KEY="sua-chave"
+export GEMINI_MODEL="gemini-3.8-flash" # opcional
+./mvnw spring-boot:run
+```
+
+`GEMINI_API_KEY` nunca deve ser adicionada ao repositório. `GEMINI_MODEL` é opcional e permite trocar
+o modelo sem recompilar. `GEMINI_BASE_URL` também pode ser sobrescrita para testes de integração.
+Sem a chave, a aplicação continua iniciando normalmente e a tentativa de análise termina com uma
+mensagem controlada no SSE.
+
+Fluxo da API:
+
+```text
+JWT -> POST /api/ai/insights
+    body: { walletId, startDate, endDate }
+    -> autorização WalletAccessService
+    -> analysisId + ticket aleatório de uso único (60s)
+
+EventSource -> GET /api/ai/insights/{analysisId}/stream?ticket=...
+    -> progress: PREPARING_DATA
+    -> progress: ANALYZING_CATEGORIES
+    -> progress: GENERATING_RECOMMENDATIONS
+    -> complete: { summary, highlights, recommendations, disclaimer }
+       ou analysis-error: { message }
+```
+
+O JWT não é colocado na URL. O endpoint SSE aceita somente o ticket efêmero, armazenado no servidor
+como hash e removido no primeiro uso. As respostas usam `Cache-Control: no-store`; o proxy reverso
+deve respeitar `X-Accel-Buffering: no` para não acumular os eventos.
+
+O provedor recebe dois períodos de igual duração: o selecionado e o imediatamente anterior. O payload
+contém moeda, totais realizados, quantidade de lançamentos pagos e totais de despesas por categoria
+(até 20 categorias). Nomes de usuário, e-mail, título/descrição de lançamento, IDs de usuário, carteira
+ou transação e dados da outra carteira de uma transferência não são enviados. O resultado é educativo
+e exibe aviso de que não constitui aconselhamento financeiro.
+
+O SSE comunica o progresso da aplicação; a chamada ao Gemini é uma única geração estruturada em JSON.
+Cada análise volta a consultar o relatório e suas permissões. Períodos seguem o limite de 366 dias e
+as mesmas regras de status e totais do extrato.
+
 ## Limite de tentativas em rotas sensíveis
 
 O backend aplica limites por janela fixa, iniciada na primeira tentativa de cada rota e identidade:
@@ -303,6 +364,7 @@ O backend aplica limites por janela fixa, iniciada na primeira tentativa de cada
 | `/api/auth/password-reset/confirm` | 5 por 10 minutos | IP |
 | `/api/users` (cadastro) | 5 por hora | IP |
 | `/api/realtime/ticket` | 30 por minuto | usuário autenticado |
+| `/api/ai/insights` | 5 por minuto | usuário autenticado |
 
 As tentativas são contadas antes da execução do endpoint, independentemente do resultado
 (inclusive senha inválida e dados malformados). Rotas e métodos não listados não consomem limite.
