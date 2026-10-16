@@ -108,6 +108,17 @@ class RateLimitFilterTest {
         assertEquals(32, forwarded.get());
     }
 
+    @Test void aiAnalysesAreLimitedPerAuthenticatedUser() throws Exception {
+        var forwarded = new AtomicInteger();
+        UUID userA = UUID.randomUUID(), userB = UUID.randomUUID();
+        authenticate(userA);
+        for (int i = 0; i < 5; i++) request("POST", "/api/ai/insights", "192.0.2.20", forwarded);
+        assertEquals(429, request("POST", "/api/ai/insights", "192.0.2.21", forwarded).getStatus());
+        authenticate(userB);
+        assertEquals(200, request("POST", "/api/ai/insights", "192.0.2.20", forwarded).getStatus());
+        assertEquals(6, forwarded.get());
+    }
+
     private void authenticate(UUID id) {
         var user = new UserDetailsImpl(id, "User", "test@example.test", "", true, List.of());
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user, null, List.of()));
