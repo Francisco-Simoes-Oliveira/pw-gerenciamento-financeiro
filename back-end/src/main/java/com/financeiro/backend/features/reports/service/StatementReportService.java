@@ -9,11 +9,14 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.PageRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.financeiro.backend.common.exception.ResourceNotFoundException;
 import com.financeiro.backend.features.reports.dto.response.StatementReport;
+import com.financeiro.backend.features.reports.event.ReportViewedEvent;
 import com.financeiro.backend.features.reports.repository.StatementRepository;
 import com.financeiro.backend.features.transaction.enums.TransactionStatus;
 import com.financeiro.backend.features.transaction.enums.TransactionType;
@@ -26,11 +29,19 @@ public class StatementReportService {
     private final StatementRepository transactions;
     private final WalletRepository wallets;
     private final WalletAccessService access;
+    private final ApplicationEventPublisher events;
 
-    public StatementReportService(StatementRepository transactions, WalletRepository wallets, WalletAccessService access) {
+    @Autowired
+    public StatementReportService(StatementRepository transactions, WalletRepository wallets, WalletAccessService access,
+            ApplicationEventPublisher events) {
         this.transactions = transactions;
         this.wallets = wallets;
         this.access = access;
+        this.events = events;
+    }
+
+    public StatementReportService(StatementRepository transactions, WalletRepository wallets, WalletAccessService access) {
+        this(transactions, wallets, access, event -> { });
     }
 
     @Transactional(readOnly = true)
@@ -82,8 +93,11 @@ public class StatementReportService {
                     origin && tx.getCategory() != null ? tx.getCategory().getName() : null,
                     movement, status, amount, impact));
         }
-        return new StatementReport(walletId, wallet.getName(), wallet.getCurrency() == null ? "BRL" : wallet.getCurrency(),
+        var report = new StatementReport(walletId, wallet.getName(), wallet.getCurrency() == null ? "BRL" : wallet.getCurrency(),
                 start, end, LocalDateTime.now(), income, expense, incoming, outgoing,
                 income.subtract(expense).add(incoming).subtract(outgoing), pending, canceled, List.copyOf(entries));
+        events.publishEvent(new ReportViewedEvent(userId, walletId, report.startDate(), report.endDate(),
+                report.netChange()));
+        return report;
     }
 }

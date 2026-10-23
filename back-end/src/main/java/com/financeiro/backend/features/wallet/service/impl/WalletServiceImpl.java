@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,8 @@ import com.financeiro.backend.features.wallet.dto.response.WalletResponse;
 import com.financeiro.backend.features.wallet.entity.Wallet;
 import com.financeiro.backend.features.wallet.entity.WalletMember;
 import com.financeiro.backend.features.wallet.enums.WalletPermission;
+import com.financeiro.backend.features.wallet.event.WalletCreatedEvent;
+import com.financeiro.backend.features.wallet.event.WalletSharedEvent;
 import com.financeiro.backend.features.wallet.mapper.WalletMapper;
 import com.financeiro.backend.features.wallet.repository.WalletMemberRepository;
 import com.financeiro.backend.features.wallet.repository.WalletRepository;
@@ -56,6 +59,9 @@ public class WalletServiceImpl implements WalletService {
     @Autowired
     private WalletAccessService walletAccessService;
 
+    @Autowired
+    private ApplicationEventPublisher eventPublisher = event -> { };
+
     @Override
     @Transactional
     public WalletResponse insert(UUID ownerId, CreateWalletRequest request) {
@@ -79,6 +85,7 @@ public class WalletServiceImpl implements WalletService {
         wallet.setCreatedAt(LocalDateTime.now());
 
         Wallet saved = repository.save(wallet);
+        eventPublisher.publishEvent(new WalletCreatedEvent(ownerId, saved.getId()));
         return mapper.toResponse(saved);
     }
 
@@ -160,6 +167,7 @@ public class WalletServiceImpl implements WalletService {
                 .build();
 
         memberRepository.save(member);
+        eventPublisher.publishEvent(new WalletSharedEvent(currentUserId, walletId));
     }
 
     @Override
@@ -199,6 +207,7 @@ public class WalletServiceImpl implements WalletService {
                 .joinedAt(LocalDateTime.now())
                 .build();
         memberRepository.save(member);
+        eventPublisher.publishEvent(new WalletSharedEvent(currentUserId, walletId));
     }
 
     @Override

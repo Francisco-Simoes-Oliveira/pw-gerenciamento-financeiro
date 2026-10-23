@@ -9,6 +9,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -18,6 +20,7 @@ import com.financeiro.backend.features.intelligence.dto.response.InsightProgress
 import com.financeiro.backend.features.intelligence.dto.response.InsightResult;
 import com.financeiro.backend.features.intelligence.dto.response.InsightStartResponse;
 import com.financeiro.backend.features.intelligence.exception.InsightProviderException;
+import com.financeiro.backend.features.intelligence.event.InsightStartedEvent;
 import com.financeiro.backend.features.intelligence.model.InsightJob;
 import com.financeiro.backend.features.wallet.repository.WalletRepository;
 import com.financeiro.backend.features.wallet.service.WalletAccessService;
@@ -30,15 +33,23 @@ public class FinancialInsightService {
     private final InsightTicketService tickets;
     private final FinancialInsightAnalysisService analysis;
     private final ExecutorService executor;
+    private final ApplicationEventPublisher events;
 
+    @Autowired
     public FinancialInsightService(WalletRepository wallets, WalletAccessService access,
             InsightTicketService tickets, FinancialInsightAnalysisService analysis,
-            @Qualifier("financialInsightExecutor") ExecutorService executor) {
+            @Qualifier("financialInsightExecutor") ExecutorService executor, ApplicationEventPublisher events) {
         this.wallets = wallets;
         this.access = access;
         this.tickets = tickets;
         this.analysis = analysis;
         this.executor = executor;
+        this.events = events;
+    }
+
+    public FinancialInsightService(WalletRepository wallets, WalletAccessService access,
+            InsightTicketService tickets, FinancialInsightAnalysisService analysis, ExecutorService executor) {
+        this(wallets, access, tickets, analysis, executor, event -> { });
     }
 
     public InsightStartResponse start(FinancialInsightRequest request, UUID userId) {
@@ -49,6 +60,7 @@ public class FinancialInsightService {
         UUID analysisId = UUID.randomUUID();
         var job = new InsightJob(analysisId, userId, request.walletId(), request.startDate(), request.endDate());
         var ticket = tickets.issue(job);
+        events.publishEvent(new InsightStartedEvent(userId, analysisId));
         return new InsightStartResponse(analysisId, ticket.value(), ticket.expiresAt(),
                 "/api/ai/insights/" + analysisId + "/stream");
     }
