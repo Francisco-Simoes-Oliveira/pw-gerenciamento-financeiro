@@ -16,6 +16,7 @@ import transactionService from "@/services/transactionService"
 import walletService from "@/services/walletService"
 import categoryService from "@/services/categoryService"
 import useRealtimeEvents from "@/hooks/useRealtimeEvents"
+import { notifyGamificationUpdate } from "@/services/gamificationService"
 
 const transactionSchema = z.object({
   walletId: z.string().uuid("Selecione uma carteira"),
@@ -161,6 +162,7 @@ export default function Transactions() {
       }
 
       await transactionService.createTransaction(payload)
+      notifyGamificationUpdate()
       toast.success("Transação criada com sucesso!")
       setIsDialogOpen(false)
       reset()

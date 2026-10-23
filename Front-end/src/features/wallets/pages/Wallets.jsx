@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import walletService from "@/services/walletService"
+import { notifyGamificationUpdate } from "@/services/gamificationService"
 
 const walletSchema = z.object({
   name: z.string().min(2, "O nome deve conter pelo menos 2 caracteres."),
@@ -69,6 +70,7 @@ export default function Wallets() {
   const onSubmit = async (data) => {
     try {
       await walletService.createWallet(data)
+      notifyGamificationUpdate()
       toast.success("Carteira criada com sucesso!")
       setIsDialogOpen(false)
       reset()

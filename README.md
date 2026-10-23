@@ -52,6 +52,8 @@ src/main/java
         ├── reports     (Queries, Projections, Dashboards)
         ├── realtime    (WebSocket, tickets efêmeros e eventos pós-commit)
         ├── intelligence(Gemini, dados agregados, tickets efêmeros e SSE)
+        ├── gamification(XP, níveis, catálogo e conquistas)
+        ├── goals       (Metas financeiras e progresso)
         └── finance     (Engine de processamento de saldos)
 ```
 
@@ -68,6 +70,8 @@ src/main/java
 - **Finance**: Core contábil interno (não exposto em Controller). Garante a consistência dos saldos das carteiras recalculando e aplicando estornos caso uma transação seja editada ou excluída.
 - **Realtime**: Emite eventos somente após o commit das transações e atualiza clientes conectados por WebSocket. O handshake usa um ticket efêmero, de uso único, emitido por uma rota protegida por JWT; o token JWT não é enviado na URL do WebSocket.
 - **Intelligence**: Gera o Resumo Inteligente de uma carteira autorizada. Reutiliza o extrato consolidado, envia somente totais e categorias ao Gemini e publica progresso e resultado por SSE.
+- **Gamification**: Concede XP por eventos de domínio confirmados, calcula níveis e mantém histórico idempotente e conquistas desbloqueadas.
+- **Goals**: Mantém metas pessoais vinculadas a carteiras autorizadas, com valor-alvo, progresso, prazo e conclusão integrada à gamificação.
 
 ---
 
@@ -85,6 +89,11 @@ erDiagram
     Category ||--o{ Transaction : classifies
     SubscriptionPlan ||--o{ UserSubscription : offers
     User ||--o{ UserSubscription : subscribes
+    User ||--|| GamificationProfile : progresses
+    User ||--o{ XpEvent : earns
+    User ||--o{ UserAchievement : unlocks
+    User ||--o{ FinancialGoal : defines
+    Wallet ||--o{ FinancialGoal : supports
 ```
 
 ---
@@ -105,6 +114,8 @@ erDiagram
 ✅ Indicadores Analíticos  
 ✅ Atualização de transações e dashboard em tempo real via WebSocket  
 ✅ Resumo Inteligente com Gemini e progresso em tempo real via SSE<br>
+✅ Gamificação real com XP, níveis, histórico e conquistas
+✅ Metas financeiras com progresso e conclusão
 ✅ Documentação Swagger (OpenAPI)  
 ✅ Testes Unitários e Cobertura (JUnit + Mockito)
 
@@ -114,8 +125,7 @@ erDiagram
 
 O projeto continua em evolução. As seguintes funcionalidades estão no planejamento e ainda não foram implementadas:
 
-- Gamificação e Pontuações
-- Metas financeiras e Orçamentos Fixos
+- Orçamentos fixos por categoria
 - Notificações de Pagamentos e Vencimentos
 - Upload de comprovantes (Storage)
 - Integração Open Finance / API Bancária
@@ -231,8 +241,8 @@ No frontend, `VITE_WS_BASE_URL` é opcional. Quando não configurada, a URL WebS
 | **Sprint 3** |   ✅   | Core Financeiro: Transações, Carteiras, Membros, Estornos e Recálculos   |
 | **Sprint 4** |   ✅   | CQRS Básico (Leitura): Dashboard, Extratos, Categorização, Indicadores   |
 | **Sprint 5** |   ✅   | Segurança: Login JWT, proteção de endpoints e autorização por carteira   |
-| **Sprint 6** |   🟡   | Tempo real via WebSocket, integração e testes                            |
-| **Sprint 7** |   ⏳   | Notificações, Gamificação e Metas                                        |
+| **Sprint 6** |   ✅   | Tempo real via WebSocket, integração e testes                            |
+| **Sprint 7** |   ✅   | Gamificação, conquistas e metas financeiras                              |
 
 ---
 
@@ -352,6 +362,46 @@ e exibe aviso de que não constitui aconselhamento financeiro.
 O SSE comunica o progresso da aplicação; a chamada ao Gemini é uma única geração estruturada em JSON.
 Cada análise volta a consultar o relatório e suas permissões. Períodos seguem o limite de 366 dias e
 as mesmas regras de status e totais do extrato.
+
+## Gamificação e metas financeiras
+
+O frontend consulta `GET /api/gamification/profile` e usa a mesma resposta real no Dashboard, na barra
+lateral, no Perfil e na página de Conquistas. Cada nível exige 200 XP. O histórico guarda a origem da
+recompensa e uma chave única por usuário, impedindo que ações de primeira vez sejam pontuadas novamente.
+
+| Ação | XP | Regra de repetição |
+| --- | ---: | --- |
+| Primeira transação | 20 | Uma vez por usuário |
+| Primeira carteira | 30 | Uma vez por usuário |
+| Primeiro compartilhamento | 40 | Uma vez por usuário |
+| Primeira meta | 30 | Uma vez por usuário |
+| Meta concluída | 200 | Uma vez por meta |
+| Mês fechado com variação positiva | 150 | Uma vez por carteira e mês fechado |
+| Primeiro relatório | 20 | Uma vez por usuário |
+| Primeiro Resumo Inteligente | 50 | Uma vez por usuário |
+
+As conquistas disponíveis são **Primeiro Passo**, **No Azul**, **Finanças em Equipe**,
+**Objetivo Cumprido**, **Analista Financeiro** e **Olho nos Gastos**. A concessão ocorre por listeners
+de eventos de domínio após o commit. Uma falha na gamificação é registrada no log e não desfaz a ação
+financeira que originou o evento.
+
+As metas são recursos pessoais: somente o usuário autenticado pode consultar ou alterar as próprias
+metas. Para criar uma meta, ele também precisa ter acesso à carteira como OWNER, EDITOR ou VIEWER.
+Uma meta concluída não pode voltar ao estado ativo, o que impede conceder novamente os 200 XP.
+
+```text
+GET    /api/gamification/profile
+GET    /api/goals
+GET    /api/goals/{id}
+POST   /api/goals
+PUT    /api/goals/{id}
+PATCH  /api/goals/{id}/progress
+DELETE /api/goals/{id}          # cancela uma meta ativa
+```
+
+O catálogo e o histórico ficam no banco da aplicação. A versão atual usa regras determinísticas e não
+envia metas nem dados de gamificação ao Gemini. A suíte automatizada possui 73 testes e cobre níveis,
+idempotência, desbloqueio, autorização e conclusão de metas, além de preservar os módulos anteriores.
 
 ## Limite de tentativas em rotas sensíveis
 

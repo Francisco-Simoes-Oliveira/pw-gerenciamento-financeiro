@@ -21,8 +21,10 @@ import dashboardService from "@/services/dashboardService"
 import walletService from "@/services/walletService"
 import { toast } from "sonner"
 import useRealtimeEvents from "@/hooks/useRealtimeEvents"
+import { useGamification } from "@/contexts/GamificationContext"
 
 export default function Dashboard() {
+  const { profile, loading: gamificationLoading } = useGamification()
   const [summary, setSummary] = useState({
     currentBalance: 0,
     monthlyIncome: 0,
@@ -93,8 +95,7 @@ export default function Dashboard() {
     }
   })
 
-  // Mock Date Greeting
-  const today = new Date("2026-06-22T00:00:00")
+  const today = new Date()
   const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" }
   const dateString = today.toLocaleDateString("pt-BR", options)
 
@@ -196,7 +197,13 @@ export default function Dashboard() {
         {/* Gamification Level & Shared Wallets */}
         <div className="flex flex-col gap-6">
           {/* LevelCard gamification area */}
-          <LevelCard level={5} rank="Mestre Financeiro" currentXp={750} nextLevelXp={1000} />
+          <LevelCard
+            level={profile.level}
+            rank={gamificationLoading ? "Carregando nível..." : profile.rank}
+            currentXp={profile.currentLevelXp}
+            nextLevelXp={profile.xpPerLevel}
+            totalXp={profile.totalXp}
+          />
 
           {/* Shared Wallets Card */}
           <FinancialCard

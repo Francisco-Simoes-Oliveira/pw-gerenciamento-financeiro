@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import walletService from "@/services/walletService"
+import { notifyGamificationUpdate } from "@/services/gamificationService"
 
 const memberSchema = z.object({
   email: z.string().email("Informe um e-mail válido."),
@@ -73,6 +74,7 @@ export default function WalletDetails() {
   const onSubmit = async (data) => {
     try {
       await walletService.addMemberByEmail(id, data)
+      notifyGamificationUpdate()
       toast.success("Membro adicionado com sucesso.")
       reset()
       await loadMembers()

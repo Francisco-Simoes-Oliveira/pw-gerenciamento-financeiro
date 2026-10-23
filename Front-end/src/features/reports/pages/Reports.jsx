@@ -5,6 +5,7 @@ import walletService from '@/services/walletService'
 import { downloadStatement, getStatementReport } from '@/services/reportService'
 import { startFinancialInsight, streamFinancialInsight } from '@/services/insightService'
 import useRealtimeEvents from '@/hooks/useRealtimeEvents'
+import { notifyGamificationUpdate } from '@/services/gamificationService'
 
 const movement = { INCOME: 'Receita', EXPENSE: 'Despesa', TRANSFER_IN: 'Transferência recebida', TRANSFER_OUT: 'Transferência enviada' }
 const status = { PAID: 'Pago', PENDING: 'Pendente', CANCELED: 'Cancelado' }
@@ -67,6 +68,7 @@ export default function Reports() {
       if (id !== requestId.current || controller.signal.aborted) return
       setReport(data)
       setPage(0)
+      notifyGamificationUpdate()
     }).catch((err) => {
       if (!controller.signal.aborted && id === requestId.current) {
         setError(err.response?.data?.message || 'Não foi possível carregar o extrato. Tente novamente.')
@@ -106,7 +108,7 @@ export default function Reports() {
   async function exportFile(format) {
     setExporting(format)
     setExportError('')
-    try { await downloadStatement(applied, format) }
+    try { await downloadStatement(applied, format); notifyGamificationUpdate() }
     catch (err) {
       let message = 'Não foi possível exportar o extrato.'
       if (err.response?.data instanceof Blob) {
@@ -126,6 +128,7 @@ export default function Reports() {
     setInsightLoading(true)
     try {
       const start = await startFinancialInsight(applied)
+      notifyGamificationUpdate()
       insightStream.current = streamFinancialInsight(start, {
         onProgress(progress) {
           setInsightProgress((items) => items.some((item) => item.step === progress.step) ? items : [...items, progress])
