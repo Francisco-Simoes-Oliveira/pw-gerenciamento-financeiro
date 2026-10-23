@@ -3,10 +3,11 @@ import { Trophy, ShieldAlert, Award } from "lucide-react"
 import XpProgress from "./XpProgress"
 
 export default function LevelCard({
-  level = 5,
-  rank = "Mestre Financeiro",
-  currentXp = 750,
-  nextLevelXp = 1000,
+  level = 1,
+  rank = "Explorador Financeiro",
+  currentXp = 0,
+  nextLevelXp = 200,
+  totalXp = 0,
 }) {
   return (
     <Card className="relative overflow-hidden border border-primary/20 bg-gradient-to-br from-card to-primary/5 shadow-md">
@@ -35,7 +36,7 @@ export default function LevelCard({
               {rank}
             </span>
             <span className="text-xs text-muted-foreground font-medium">
-              Continue registrando suas despesas para subir de nível!
+              {totalXp} XP acumulados em hábitos financeiros saudáveis.
             </span>
           </div>
         </div>

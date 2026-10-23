@@ -15,6 +15,7 @@ import {
   TrendingUp
 } from "lucide-react"
 import { Tooltip } from "@/components/ui/tooltip"
+import { useGamification } from "@/contexts/GamificationContext"
 
 export default function AppSidebar({ collapsed, setCollapsed }) {
   const location = useLocation()
@@ -22,6 +23,7 @@ export default function AppSidebar({ collapsed, setCollapsed }) {
   const user = JSON.parse(localStorage.getItem("usuario") || "{}")
   const userName = user.name || "Usuário"
   const userInitial = userName.charAt(0).toUpperCase()
+  const { profile } = useGamification()
 
   const menuItems = [
     { name: "Dashboard", path: "/dashboard", icon: Home },
@@ -35,12 +37,11 @@ export default function AppSidebar({ collapsed, setCollapsed }) {
     { name: "Perfil", path: "/profile", icon: User },
   ]
 
-  // Mocked level data for design integration
   const levelData = {
-    level: 5,
-    rank: "Mestre Financeiro",
-    xp: 750,
-    nextXp: 1000,
+    level: profile.level,
+    rank: profile.rank,
+    xp: profile.currentLevelXp,
+    nextXp: profile.xpPerLevel,
   }
 
   const handleNavigation = (path) => {
@@ -128,7 +129,7 @@ export default function AppSidebar({ collapsed, setCollapsed }) {
               <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary/80">
                 <div
                   className="h-full bg-primary transition-all duration-500"
-                  style={{ width: `${(levelData.xp / levelData.nextXp) * 100}%` }}
+                  style={{ width: `${profile.progressPercentage}%` }}
                 />
               </div>
               <span className="text-[10px] text-muted-foreground text-center font-medium">

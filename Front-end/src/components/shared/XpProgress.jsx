@@ -1,13 +1,14 @@
 import { Progress } from "@/components/ui/progress"
 
 export default function XpProgress({ current = 0, total = 100 }) {
-  const percentage = Math.round((current / total) * 100)
+  const safeTotal = total > 0 ? total : 1
+  const percentage = Math.min(100, Math.max(0, Math.round((current / safeTotal) * 100)))
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
       <div className="flex items-center justify-between text-xs font-semibold">
         <span className="text-muted-foreground">Progresso de Nível</span>
-        <span className="text-foreground">{current} / {total} XP ({percentage}%)</span>
+        <span className="text-foreground">{current} / {safeTotal} XP ({percentage}%)</span>
       </div>
       <Progress
         value={percentage}

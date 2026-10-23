@@ -3,6 +3,7 @@ import AppSidebar from "../shared/AppSidebar"
 import AppHeader from "../shared/AppHeader"
 import { useState, useEffect } from "react"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { GamificationProvider } from "@/contexts/GamificationContext"
 
 export default function DashboardLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -32,6 +33,7 @@ export default function DashboardLayout() {
   }, [])
 
   return (
+    <GamificationProvider>
     <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground antialiased font-sans">
       {/* Sidebar for Desktop & Tablet viewports */}
       {!isMobile && (
@@ -59,5 +61,6 @@ export default function DashboardLayout() {
         </main>
       </div>
     </div>
+    </GamificationProvider>
   )
 }
