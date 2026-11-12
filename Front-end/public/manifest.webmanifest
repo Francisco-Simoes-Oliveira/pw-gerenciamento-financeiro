@@ -1,0 +1,55 @@
+{
+  "id": "/",
+  "name": "FinShare — Gerenciamento Financeiro",
+  "short_name": "FinShare",
+  "description": "Controle financeiro pessoal e compartilhado com relatórios, metas, gamificação e inteligência.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f8fafc",
+  "theme_color": "#1e3a8a",
+  "categories": ["finance", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/finshare-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/finshare-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/finshare-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/finshare-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icons/finshare-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Relatórios",
+      "short_name": "Relatórios",
+      "url": "/reports",
+      "icons": [{ "src": "/icons/finshare-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
