@@ -71,7 +71,13 @@ api.interceptors.response.use(
           toast.error(message);
       }
     } else if (error.request) {
-      toast.error('Erro de conexão. Verifique sua rede e se o backend está executando.');
+      const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+      toast.error(
+        offline
+          ? 'Você está offline. Os dados financeiros não ficam armazenados neste dispositivo.'
+          : 'Não foi possível carregar os dados. Verifique sua rede e se o backend está executando.',
+        { id: 'api-connection-error' }
+      );
     } else {
       toast.error('Ocorreu um erro inesperado.');
     }

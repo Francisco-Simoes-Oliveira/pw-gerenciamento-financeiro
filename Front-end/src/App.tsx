@@ -19,6 +19,7 @@ import Profile from "./features/profile/pages/Profile"
 import ProtectedRoute from "./routes/ProtectedRoute"
 import { useNavigate } from "react-router-dom"
 import { useEffect } from "react"
+import { AppStatus } from "@/components/shared/AppStatus"
 
 function AuthListener() {
   const navigate = useNavigate()
@@ -68,6 +69,7 @@ export function App() {
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
       </BrowserRouter>
+      <AppStatus />
       <Toaster position="top-right" richColors />
     </div>
   )

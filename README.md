@@ -17,6 +17,7 @@ A aplicação é construída utilizando as seguintes tecnologias e frameworks:
 - **Spring WebSocket** (atualização de transações em tempo real)
 - **Server-Sent Events (SSE)** (progresso e resultado do Resumo Inteligente)
 - **Google Gemini API** (análise de dados financeiros agregados)
+- **React 19, Vite e PWA** (instalação, shell offline e atualização versionada)
 - **MariaDB** (Produção/Desenvolvimento)
 - **H2 Database** (Ambiente de Testes)
 - **Maven**
@@ -116,6 +117,7 @@ erDiagram
 ✅ Resumo Inteligente com Gemini e progresso em tempo real via SSE<br>
 ✅ Gamificação real com XP, níveis, histórico e conquistas
 ✅ Metas financeiras com progresso e conclusão
+✅ PWA instalável com shell offline e atualização segura
 ✅ Documentação Swagger (OpenAPI)  
 ✅ Testes Unitários e Cobertura (JUnit + Mockito)
 
@@ -189,6 +191,43 @@ Para rodar a suíte de testes unitários localmente (utilizando banco H2 em mem�
 ./mvnw test
 ```
 
+## PWA: instalação, cache e modo offline
+
+O frontend é uma PWA instalável chamada **FinShare**. O manifesto define identidade visual, ícones
+comuns e `maskable`, cores de tema e fundo e execução em `display: standalone`. O service worker é
+gerado pelo build com uma versão baseada no conteúdo dos arquivos publicados.
+
+Para validar a versão de produção localmente:
+
+```bash
+cd Front-end
+npm ci
+npm run build
+npm run preview -- --host
+```
+
+Abra a URL exibida pelo Vite em Chrome ou Edge e use **Instalar FinShare** no menu ou no ícone da
+barra de endereço. Service workers exigem HTTPS em produção; `localhost` é aceito para desenvolvimento.
+O comando `npm run build` também executa `npm run test:pwa`, que valida o manifesto, os ícones, a
+lista de precache e as exclusões de segurança do service worker.
+
+Para testar o modo offline:
+
+1. Acesse uma tela do sistema uma vez com a aplicação online, para instalar e ativar o service worker.
+2. No DevTools, abra **Application > Service Workers** e confirme que `/sw.js` está ativo.
+3. Em **Network**, selecione **Offline** e recarregue a rota visitada, como `/dashboard`.
+4. O shell da interface deve abrir e exibir o aviso de conexão. Dados que dependem da API podem ficar
+   indisponíveis até a rede voltar; ao restabelecer a conexão, a interface informa que já pode atualizar.
+
+Somente o HTML do application shell e assets públicos produzidos pelo build são armazenados. Rotas
+`/api`, `/ws` e `/socket`, SSE (`text/event-stream`) e requisições com cabeçalho `Authorization` são
+sempre ignoradas pelo cache. JWTs e respostas financeiras autenticadas não são enviados ao service
+worker nem persistidos por ele. Não há sincronização, fila ou criação offline de transações nesta etapa.
+
+Quando um novo build é publicado, o navegador instala a nova versão em espera sem interromper a sessão.
+O FinShare mostra **Atualizar agora**; ao confirmar, a versão nova assume o controle, remove caches PWA
+antigos e recarrega a página. A aplicação também verifica atualizações ao voltar para a aba e a cada hora.
+
 ---
 
 ## Documentação da API
@@ -243,6 +282,7 @@ No frontend, `VITE_WS_BASE_URL` é opcional. Quando não configurada, a URL WebS
 | **Sprint 5** |   ✅   | Segurança: Login JWT, proteção de endpoints e autorização por carteira   |
 | **Sprint 6** |   ✅   | Tempo real via WebSocket, integração e testes                            |
 | **Sprint 7** |   ✅   | Gamificação, conquistas e metas financeiras                              |
+| **Sprint 8** |   ✅   | PWA instalável, shell offline, feedback de rede e atualização versionada |
 
 ---
 
