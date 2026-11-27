@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.financeiro.backend.common.exception.ResourceNotFoundException;
 import com.financeiro.backend.common.exception.ConflictException;
@@ -17,6 +18,7 @@ import com.financeiro.backend.features.auth.entity.User;
 import com.financeiro.backend.features.auth.mapper.UserMapper;
 import com.financeiro.backend.features.auth.repository.UserRepository;
 import com.financeiro.backend.features.auth.service.UserService;
+import com.financeiro.backend.features.subscription.service.DefaultSubscriptionService;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -30,7 +32,11 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private DefaultSubscriptionService defaultSubscriptionService;
+
     @Override
+    @Transactional
     public UserResponse insert(CreateUserRequest request) {
         if (repository.existsByEmail(request.getEmail())) {
             throw new ConflictException("O e-mail informado já está em uso.");
@@ -42,6 +48,7 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
         User saved = repository.save(user);
+        defaultSubscriptionService.ensureSubscription(saved);
         return mapper.toResponse(saved);
     }
 

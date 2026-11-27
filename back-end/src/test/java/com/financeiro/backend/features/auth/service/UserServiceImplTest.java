@@ -23,6 +23,7 @@ import com.financeiro.backend.features.auth.entity.User;
 import com.financeiro.backend.features.auth.mapper.UserMapper;
 import com.financeiro.backend.features.auth.repository.UserRepository;
 import com.financeiro.backend.features.auth.service.impl.UserServiceImpl;
+import com.financeiro.backend.features.subscription.service.DefaultSubscriptionService;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceImplTest {
@@ -35,6 +36,9 @@ public class UserServiceImplTest {
 
     @Mock
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @Mock
+    private DefaultSubscriptionService defaultSubscriptionService;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -95,5 +99,6 @@ public class UserServiceImplTest {
         assertNotNull(response);
         assertEquals("Test", response.getName());
         verify(userRepository).save(any(User.class));
+        verify(defaultSubscriptionService).ensureSubscription(savedUser);
     }
 }

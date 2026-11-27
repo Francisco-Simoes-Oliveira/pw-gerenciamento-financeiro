@@ -16,6 +16,7 @@ import com.financeiro.backend.common.exception.ResourceNotFoundException;
 import com.financeiro.backend.features.auth.entity.User;
 import com.financeiro.backend.features.auth.repository.UserRepository;
 import com.financeiro.backend.features.subscription.entity.UserSubscription;
+import com.financeiro.backend.features.subscription.service.DefaultSubscriptionService;
 import com.financeiro.backend.features.subscription.repository.UserSubscriptionRepository;
 import com.financeiro.backend.features.transaction.repository.TransactionRepository;
 import com.financeiro.backend.features.wallet.dto.request.AddWalletMemberRequest;
@@ -54,6 +55,9 @@ public class WalletServiceImpl implements WalletService {
     private UserSubscriptionRepository subscriptionRepository;
 
     @Autowired
+    private DefaultSubscriptionService defaultSubscriptionService;
+
+    @Autowired
     private WalletMapper mapper;
 
     @Autowired
@@ -68,8 +72,8 @@ public class WalletServiceImpl implements WalletService {
         User owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Owner não encontrado com ID: " + ownerId));
 
-        UserSubscription subscription = subscriptionRepository.findByUserId(ownerId)
-                .orElseThrow(() -> new IllegalStateException("O usuário precisa de uma assinatura ativa para criar carteiras."));
+        // Cobre também usuários cadastrados antes da implantação do plano gratuito.
+        UserSubscription subscription = defaultSubscriptionService.ensureSubscription(owner);
 
         Integer maxWallets = subscription.getPlan().getMaxWallets();
         if (maxWallets != null) {
