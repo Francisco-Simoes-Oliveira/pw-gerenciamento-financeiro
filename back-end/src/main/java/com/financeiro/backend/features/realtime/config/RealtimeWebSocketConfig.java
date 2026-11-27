@@ -27,6 +27,9 @@ public class RealtimeWebSocketConfig implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(handler, "/ws/realtime")
                 .addInterceptors(handshakeInterceptor)
-                .setAllowedOrigins("http://localhost:5173", "http://localhost:5174");
+                .setAllowedOrigins(
+                        "http://localhost:5173",
+                        "http://localhost:5174",
+                        "https://finshare-frontend.vercel.app");
     }
 }
